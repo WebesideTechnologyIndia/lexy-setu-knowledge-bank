@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Knowledge Bank - Rules & Regulations{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #43a047 0%, #1e88e5 100%);
+            color: white;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .content-area {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .breadcrumb {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .form-control:focus {
+            border-color: #43a047;
+            box-shadow: 0 0 0 0.2rem rgba(67, 160, 71, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #43a047 0%, #1e88e5 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(67, 160, 71, 0.4);
+        }
+        
+        .hierarchy-level-0 { margin-left: 0; }
+        .hierarchy-level-1 { margin-left: 20px; }
+        .hierarchy-level-2 { margin-left: 40px; }
+        .hierarchy-level-3 { margin-left: 60px; }
+        
+        .section-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .rule-badge {
+            background: linear-gradient(135deg, #43a047 0%, #1e88e5 100%);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .regulation-item {
+            border-left: 4px solid #43a047;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 p-0">
+                <div class="sidebar">
+                    <div class="p-4">
+                        <h4 class="mb-4">
+                            <i class="fas fa-gavel me-2"></i>
+                            Rules & Regulations
+                        </h4>
+                        
+                        <!-- Search Box -->
+                        <div class="mb-4">
+                            <form method="get" action="{% url 'rules:search' %}">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" placeholder="Search rules..." value="{{ request.GET.q }}">
+                                    <button class="btn btn-outline-light" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Navigation Menu -->
+                        <nav class="nav flex-column" id="navigation-menu">
+                            <!-- Dynamic menu will be loaded here -->
+                        </nav>
+                        
+                        <!-- Quick Links -->
+                        <div class="mt-4 pt-4 border-top border-white border-opacity-25">
+                            <h6 class="text-white-50 mb-3">Quick Actions</h6>
+                            <a href="{% url 'rules:bookmarks' %}" class="nav-link">
+                                <i class="fas fa-bookmark me-2"></i>My Bookmarks
+                            </a>
+                            <a href="{% url 'rules:recent' %}" class="nav-link">
+                                <i class="fas fa-clock me-2"></i>Recent Rules
+                            </a>
+                            <a href="{% url 'rules:favorites' %}" class="nav-link">
+                                <i class="fas fa-star me-2"></i>Favorites
+                            </a>
+                            <a href="/admin/" class="nav-link" target="_blank">
+                                <i class="fas fa-plus me-2"></i>Add Content
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <div class="content-area p-4">
+                    <!-- Breadcrumb -->
+                    {% if breadcrumb %}
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb p-3">
+                            {% for item in breadcrumb %}
+                                {% if forloop.last %}
+                                    <li class="breadcrumb-item active">{{ item.name }}</li>
+                                {% else %}
+                                    <li class="breadcrumb-item">
+                                        <a href="{{ item.url }}">{{ item.name }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ol>
+                    </nav>
+                    {% endif %}
+                    
+                    <!-- Main Content Block -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- CKEditor -->
+    {% load static %}
+    {{ form.media }}
+    
+    <script>
+        // Load navigation menu
+        fetch('{% url "rules:navigation_api" %}')
+            .then(response => response.json())
+            .then(data => {
+                const menu = document.getElementById('navigation-menu');
+                menu.innerHTML = buildNavigationHTML(data.navigation);
+            });
+        
+        function buildNavigationHTML(categories) {
+            let html = '';
+            categories.forEach(category => {
+                html += `
+                    <div class="nav-item">
+                        <a class="nav-link" href="${category.url}">
+                            <i class="fas fa-folder me-2"></i>${category.name}
+                        </a>
+                        ${category.rules.length > 0 ? buildRulesHTML(category.rules) : ''}
+                    </div>
+                `;
+            });
+            return html;
+        }
+        
+        function buildRulesHTML(rules) {
+            let html = '<div class="ms-3">';
+            rules.forEach(rule => {
+                html += `
+                    <a class="nav-link small" href="${rule.url}">
+                        <i class="fas fa-file-contract me-2"></i>${rule.name}
+                    </a>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+        
+        // Bookmark functionality
+        function toggleBookmark(contentType, objectId, title, url) {
+            fetch('{% url "rules:bookmark_toggle" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    content_type: contentType,
+                    object_id: objectId,
+                    title: title,
+                    url: url
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const btn = document.getElementById('bookmark-btn');
+                if (data.bookmarked) {
+                    btn.innerHTML = '<i class="fas fa-bookmark"></i> Bookmarked';
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                } else {
+                    btn.innerHTML = '<i class="far fa-bookmark"></i> Bookmark';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                }
+            });
+        }
+        
+        // Rule highlighting functionality
+        function highlightRule(ruleId) {
+            const ruleElement = document.getElementById('rule-' + ruleId);
+            if (ruleElement) {
+                ruleElement.classList.add('bg-warning');
+                setTimeout(() => {
+                    ruleElement.classList.remove('bg-warning');
+                }, 3000);
+            }
+        }
+        
+        // Print rule functionality
+        function printRule() {
+            window.print();
+        }
+        
+        // Share rule functionality
+        function shareRule(title, url) {
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    url: url
+                });
+            } else {
+                // Fallback to clipboard
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Rule link copied to clipboard!');
+                });
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

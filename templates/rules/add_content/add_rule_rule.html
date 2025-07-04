@@ -1,0 +1,137 @@
+<!-- templates/rules/add_content/add_rule.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Rule - Knowledge Bank</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 bg-primary text-white p-4" style="min-height: 100vh;">
+                <h4><i class="fas fa-balance-scale me-2"></i>Tax Laws</h4>
+                <nav class="nav flex-column mt-4">
+                    <a href="{% url 'rules:home' %}" class="nav-link text-white">Home</a>
+                    <a href="{% url 'rules:add_content_home' %}" class="nav-link text-white">Add Content</a>
+                </nav>
+            </div>
+            
+            <div class="col-md-9 p-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'rules:home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'rules:add_content_home' %}">Add Content</a></li>
+                        <li class="breadcrumb-item active">Add Rule</li>
+                    </ol>
+                </nav>
+                
+                <div class="bg-primary text-white p-4 rounded mb-4">
+                    <h2><i class="fas fa-gavel me-3"></i>Add New Rule</h2>
+                    <p class="mb-0">Add rules related to acts and sections</p>
+                </div>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="card">
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-file-alt me-2"></i>Act *</label>
+                                        {{ form.act }}
+                                        {% if form.act.errors %}<div class="text-danger">{{ form.act.errors.0 }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-list me-2"></i>Section</label>
+                                        {{ form.section }}
+                                        <small class="form-text text-muted">Optional</small>
+                                        {% if form.section.errors %}<div class="text-danger">{{ form.section.errors.0 }}</div>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-hashtag me-2"></i>Rule Number *</label>
+                                        {{ form.rule_number }}
+                                        {% if form.rule_number.errors %}<div class="text-danger">{{ form.rule_number.errors.0 }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-tag me-2"></i>Rule Name *</label>
+                                        {{ form.name }}
+                                        {% if form.name.errors %}<div class="text-danger">{{ form.name.errors.0 }}</div>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-file-text me-2"></i>Rule Content *</label>
+                                {{ form.content }}
+                                {% if form.content.errors %}<div class="text-danger">{{ form.content.errors.0 }}</div>{% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-align-left me-2"></i>Description</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}<div class="text-danger">{{ form.description.errors.0 }}</div>{% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-edit me-2"></i>Amendments</label>
+                                {{ form.amendments }}
+                                {% if form.amendments.errors %}<div class="text-danger">{{ form.amendments.errors.0 }}</div>{% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-calendar me-2"></i>Effective Date</label>
+                                        {{ form.effective_date }}
+                                        {% if form.effective_date.errors %}<div class="text-danger">{{ form.effective_date.errors.0 }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-sort-numeric-up me-2"></i>Order</label>
+                                        {{ form.order }}
+                                        {% if form.order.errors %}<div class="text-danger">{{ form.order.errors.0 }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check mt-4">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'rules:add_content_home' %}" class="btn btn-secondary">Back</a>
+                                <button type="submit" class="btn btn-primary">Create Rule</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ form.media }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

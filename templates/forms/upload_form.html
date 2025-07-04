@@ -1,0 +1,865 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}Upload Form & Get URL - Tax Forms Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-area {
+        border: 2px dashed #007bff;
+        border-radius: 15px;
+        padding: 50px;
+        text-align: center;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .upload-area::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(0,123,255,0.1), transparent);
+        transform: rotate(45deg);
+        transition: all 0.3s ease;
+        opacity: 0;
+    }
+    
+    .upload-area:hover {
+        border-color: #0056b3;
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,123,255,0.2);
+    }
+    
+    .upload-area:hover::before {
+        opacity: 1;
+    }
+    
+    .upload-area.dragover {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        transform: scale(1.02);
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        color: #007bff;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .form-preview {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-top: 30px;
+        padding: 30px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .url-generated {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        border: 1px solid #28a745;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .url-generated::before {
+        content: '✓';
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #28a745;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    
+    .copy-btn {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .copy-btn::after {
+        content: 'Copied!';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .copy-btn.copied::after {
+        opacity: 1;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .file-info {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+        border-left: 4px solid #007bff;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 10px;
+        margin: 20px 0;
+        display: none;
+    }
+    
+    .success-animation {
+        animation: successPulse 0.6s ease-in-out;
+    }
+    
+    @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 40px;
+    }
+    
+    .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 10px;
+        font-weight: bold;
+        position: relative;
+    }
+    
+    .step.active {
+        background: #007bff;
+        color: white;
+    }
+    
+    .step.completed {
+        background: #28a745;
+        color: white;
+    }
+    
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        width: 20px;
+        height: 2px;
+        background: #e9ecef;
+        margin-left: 10px;
+    }
+    
+    .step:last-child::after {
+        display: none;
+    }
+    
+    .step.completed::after {
+        background: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step1">1</div>
+        <div class="step" id="step2">2</div>
+        <div class="step" id="step3">3</div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary mb-3">
+                    <i class="fas fa-cloud-upload-alt me-3"></i>Upload Form & Get URL
+                </h1>
+                <p class="lead text-muted">Upload your form file and get a direct download URL to save in your database</p>
+            </div>
+
+            <!-- Upload Form -->
+            <div class="form-card">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="form_number" class="form-label fw-bold">Form Number *</label>
+                            <input type="text" class="form-control form-control-lg" id="form_number" 
+                                   name="form_number" placeholder="e.g., ITR-1, GST-1, ROC-1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="assessment_year" class="form-label fw-bold">Assessment Year</label>
+                            <input type="text" class="form-control form-control-lg" id="assessment_year" 
+                                   name="assessment_year" placeholder="e.g., 2024-25">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-bold">Form Title *</label>
+                        <input type="text" class="form-control form-control-lg" id="title" 
+                               name="title" placeholder="e.g., Individual Income Tax Return" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="category" class="form-label fw-bold">Category *</label>
+                        <select class="form-select form-select-lg" id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- File Upload Area -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Upload Form Files (Multiple Formats)</label>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h4 class="mb-3">Drag & Drop your form files here</h4>
+                            <p class="text-muted mb-4">Upload PDF, Word, and Excel versions of the same form</p>
+                            
+                            <!-- PDF, Word, Excel Upload -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-danger">
+                                        <i class="fas fa-file-pdf me-1"></i>PDF Version
+                                    </label>
+                                    <input type="file" class="form-control" name="pdf_file" 
+                                           accept=".pdf" id="pdfFile" style="display: block !important;">
+                                    <small class="text-muted">Recommended for viewing</small>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100" 
+                                                onclick="selectPdfFile()">
+                                            <i class="fas fa-file-pdf me-1"></i>Choose PDF File
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-primary">
+                                        <i class="fas fa-file-word me-1"></i>Word Version
+                                    </label>
+                                    <input type="file" class="form-control" name="word_file" 
+                                           accept=".doc,.docx" id="wordFile" style="display: block !important;">
+                                    <small class="text-muted">Editable format</small>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" 
+                                                onclick="selectWordFile()">
+                                            <i class="fas fa-file-word me-1"></i>Choose Word File
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-success">
+                                        <i class="fas fa-file-excel me-1"></i>Excel Version
+                                    </label>
+                                    <input type="file" class="form-control" name="excel_file" 
+                                           accept=".xls,.xlsx" id="excelFile" style="display: block !important;">
+                                    <small class="text-muted">Calculation format</small>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-outline-success btn-sm w-100" 
+                                                onclick="selectExcelFile()">
+                                            <i class="fas fa-file-excel me-1"></i>Choose Excel File
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <p class="text-muted mb-0">
+                                    <strong>OR</strong> use the individual buttons above to select specific file types
+                                </p>
+                            </div>
+                            
+                            <p class="text-muted mt-3 mb-0">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Upload at least one format. Multiple formats will give users more download options.
+                                    <br>Max file size: 50MB per file
+                                </small>
+                            </p>
+                        </div>
+                        
+                        <!-- File Preview Cards -->
+                        <div id="filePreviewCards" class="mt-3"></div>
+                        
+                        <!-- Progress Bars -->
+                        <div class="progress-container mt-3" style="display: none;">
+                            <div class="progress mb-2" id="pdfProgress" style="display: none;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                                <small class="position-absolute w-100 text-center">PDF Upload</small>
+                            </div>
+                            <div class="progress mb-2" id="wordProgress" style="display: none;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                                <small class="position-absolute w-100 text-center">Word Upload</small>
+                            </div>
+                            <div class="progress mb-2" id="excelProgress" style="display: none;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                <small class="position-absolute w-100 text-center">Excel Upload</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alternative URL Input -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <hr class="flex-grow-1">
+                            <span class="mx-3 text-muted">OR</span>
+                            <hr class="flex-grow-1">
+                        </div>
+                        <label for="external_url" class="form-label fw-bold">External URL</label>
+                        <input type="url" class="form-control form-control-lg" id="external_url" 
+                               name="external_url" placeholder="https://example.com/form.pdf">
+                        <div class="form-text">If you don't want to upload, provide direct URL to the form</div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-bold">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" 
+                                  placeholder="Brief description of the form and its usage..."></textarea>
+                    </div>
+                    
+                    <!-- Additional Options -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured">
+                                <label class="form-check-label fw-bold" for="is_featured">
+                                    Mark as Featured
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                <label class="form-check-label fw-bold" for="is_active">
+                                    Make Active
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="fas fa-upload me-2"></i>Upload Form & Generate URL
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Loading Spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Uploading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Uploading your form...</p>
+                </div>
+            </div>
+
+            <!-- Form Preview (Hidden initially) -->
+            <div class="form-preview d-none" id="formPreview">
+                <h3 class="text-success mb-4">
+                    <i class="fas fa-check-circle me-2"></i>Form Uploaded Successfully!
+                </h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="file-info">
+                            <h5>Form Information</h5>
+                            <p><strong>Form Number:</strong> <span id="preview-form-number"></span></p>
+                            <p><strong>Title:</strong> <span id="preview-title"></span></p>
+                            <p><strong>Category:</strong> <span id="preview-category"></span></p>
+                            <p><strong>Assessment Year:</strong> <span id="preview-year"></span></p>
+                            <p><strong>File Size:</strong> <span id="preview-size"></span></p>
+                            <p><strong>File Type:</strong> <span id="preview-type"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="url-generated success-animation">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-link me-2"></i>Generated URLs
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Direct Download URL:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="downloadUrl" readonly>
+                                    <button class="btn btn-outline-primary copy-btn" type="button" 
+                                            onclick="copyToClipboard('downloadUrl')">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Form Detail Page URL:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="detailUrl" readonly>
+                                    <button class="btn btn-outline-primary copy-btn" type="button" 
+                                            onclick="copyToClipboard('detailUrl')">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2 mt-4">
+                                <a href="#" id="previewLink" class="btn btn-success" target="_blank">
+                                    <i class="fas fa-eye me-1"></i>Preview Form
+                                </a>
+                                <a href="#" id="adminLink" class="btn btn-outline-primary" target="_blank">
+                                    <i class="fas fa-cog me-1"></i>Edit in Admin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upload Another Form -->
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-primary" onclick="resetForm()">
+                        <i class="fas fa-plus me-2"></i>Upload Another Form
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInputs = {
+        pdf: document.getElementById('pdfFile'),
+        word: document.getElementById('wordFile'),
+        excel: document.getElementById('excelFile')
+    };
+    const uploadForm = document.getElementById('uploadForm');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const formPreview = document.getElementById('formPreview');
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        
+        // Auto-assign files based on extension
+        for (let file of files) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'pdf') {
+                fileInputs.pdf.files = createFileList([file]);
+                updateFilePreview('pdf', file);
+            } else if (['doc', 'docx'].includes(ext)) {
+                fileInputs.word.files = createFileList([file]);
+                updateFilePreview('word', file);
+            } else if (['xls', 'xlsx'].includes(ext)) {
+                fileInputs.excel.files = createFileList([file]);
+                updateFilePreview('excel', file);
+            }
+        }
+    });
+    
+    // File input change handlers
+    Object.keys(fileInputs).forEach(type => {
+        fileInputs[type].addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                updateFilePreview(type, e.target.files[0]);
+            }
+        });
+    });
+    
+    // Create FileList from array (for drag & drop)
+    function createFileList(files) {
+        const dt = new DataTransfer();
+        files.forEach(file => dt.items.add(file));
+        return dt.files;
+    }
+    
+    // Update file preview
+    function updateFilePreview(type, file) {
+        const container = document.getElementById('filePreviewCards');
+        
+        // Remove existing preview for this type
+        const existingCard = container.querySelector(`[data-type="${type}"]`);
+        if (existingCard) {
+            existingCard.remove();
+        }
+        
+        // Create new preview card
+        const card = document.createElement('div');
+        card.className = 'card border-start border-4 mb-2';
+        card.setAttribute('data-type', type);
+        
+        let borderClass, iconClass, colorClass;
+        switch(type) {
+            case 'pdf':
+                borderClass = 'border-danger';
+                iconClass = 'fas fa-file-pdf text-danger';
+                colorClass = 'text-danger';
+                break;
+            case 'word':
+                borderClass = 'border-primary';
+                iconClass = 'fas fa-file-word text-primary';
+                colorClass = 'text-primary';
+                break;
+            case 'excel':
+                borderClass = 'border-success';
+                iconClass = 'fas fa-file-excel text-success';
+                colorClass = 'text-success';
+                break;
+        }
+        
+        card.className += ` ${borderClass}`;
+        card.innerHTML = `
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="${iconClass} me-2 fa-lg"></i>
+                        <div>
+                            <strong class="${colorClass}">${file.name}</strong>
+                            <small class="text-muted d-block">Size: ${formatFileSize(file.size)}</small>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge bg-success">Selected</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" 
+                                onclick="removeFile('${type}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(card);
+    }
+    
+    // Remove file
+    window.removeFile = function(type) {
+        fileInputs[type].value = '';
+        const card = document.querySelector(`[data-type="${type}"]`);
+        if (card) {
+            card.remove();
+        }
+    };
+    
+    // File selection functions
+    window.selectPdfFile = function() {
+        console.log('PDF button clicked'); // Debug
+        const pdfInput = document.getElementById('pdfFile');
+        if (pdfInput) {
+            pdfInput.click();
+            console.log('PDF input clicked'); // Debug
+        } else {
+            console.log('PDF input not found'); // Debug
+        }
+    };
+    
+    window.selectWordFile = function() {
+        console.log('Word button clicked'); // Debug
+        const wordInput = document.getElementById('wordFile');
+        if (wordInput) {
+            wordInput.click();
+            console.log('Word input clicked'); // Debug
+        } else {
+            console.log('Word input not found'); // Debug
+        }
+    };
+    
+    window.selectExcelFile = function() {
+        console.log('Excel button clicked'); // Debug
+        const excelInput = document.getElementById('excelFile');
+        if (excelInput) {
+            excelInput.click();
+            console.log('Excel input clicked'); // Debug
+        } else {
+            console.log('Excel input not found'); // Debug
+        }
+    };
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Form submission
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+        
+        // Update steps
+        updateStep(2);
+        
+        // Show loading
+        uploadForm.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+        document.querySelector('.progress-container').style.display = 'block';
+        
+        // Simulate progress for multiple files
+        simulateMultipleProgress();
+        
+        // Create FormData with multiple files
+        const formData = new FormData();
+        
+        // Add form fields
+        const formElements = uploadForm.elements;
+        for (let element of formElements) {
+            if (element.type !== 'file' && element.name) {
+                formData.append(element.name, element.value);
+            }
+        }
+        
+        // Add files
+        Object.keys(fileInputs).forEach(type => {
+            const fileInput = fileInputs[type];
+            if (fileInput.files.length > 0) {
+                formData.append(`${type}_file`, fileInput.files[0]);
+            }
+        });
+        
+        // Submit form via AJAX
+        fetch('{% url "forms:upload_form" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStep(3);
+                showSuccess(data);
+            } else {
+                showError(data.error || 'Upload failed');
+            }
+        })
+        .catch(error => {
+            showError('Network error occurred');
+        });
+    });
+    
+    // Validate form
+    function validateForm() {
+        const formNumber = document.getElementById('form_number').value;
+        const title = document.getElementById('title').value;
+        const category = document.getElementById('category').value;
+        const externalUrl = document.getElementById('external_url').value;
+        
+        if (!formNumber || !title || !category) {
+            alert('Please fill in all required fields');
+            return false;
+        }
+        
+        // Check if at least one file is uploaded or external URL is provided
+        const hasFile = Object.values(fileInputs).some(input => input.files.length > 0);
+        if (!hasFile && !externalUrl) {
+            alert('Please upload at least one file or provide an external URL');
+            return false;
+        }
+        
+        // Check file sizes
+        for (let type in fileInputs) {
+            const files = fileInputs[type].files;
+            if (files.length > 0 && files[0].size > 50 * 1024 * 1024) {
+                alert(`${type.toUpperCase()} file size must be less than 50MB`);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    // Update step indicator
+    function updateStep(step) {
+        for (let i = 1; i <= 3; i++) {
+            const stepEl = document.getElementById(`step${i}`);
+            if (i < step) {
+                stepEl.classList.add('completed');
+                stepEl.classList.remove('active');
+            } else if (i === step) {
+                stepEl.classList.add('active');
+                stepEl.classList.remove('completed');
+            } else {
+                stepEl.classList.remove('active', 'completed');
+            }
+        }
+    }
+    
+    // Simulate progress for multiple files
+    function simulateMultipleProgress() {
+        const progressBars = {
+            pdf: document.getElementById('pdfProgress'),
+            word: document.getElementById('wordProgress'),
+            excel: document.getElementById('excelProgress')
+        };
+        
+        Object.keys(fileInputs).forEach(type => {
+            if (fileInputs[type].files.length > 0) {
+                const progressBar = progressBars[type];
+                progressBar.style.display = 'block';
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) {
+                        progress = 90;
+                        clearInterval(interval);
+                    }
+                    progressBar.querySelector('.progress-bar').style.width = progress + '%';
+                }, 200);
+            }
+        });
+    }
+    
+    // Show success
+    function showSuccess(data) {
+        loadingSpinner.style.display = 'none';
+        document.querySelector('.progress-container').style.display = 'none';
+        formPreview.classList.remove('d-none');
+        
+        // Complete all progress bars
+        document.querySelectorAll('.progress-bar').forEach(bar => {
+            bar.style.width = '100%';
+        });
+        
+        // Fill preview data
+        document.getElementById('preview-form-number').textContent = data.form_number;
+        document.getElementById('preview-title').textContent = data.title;
+        document.getElementById('preview-category').textContent = data.category;
+        document.getElementById('preview-year').textContent = data.assessment_year || 'N/A';
+        
+        // Show file types uploaded
+        const fileTypes = [];
+        if (data.has_pdf) fileTypes.push('PDF');
+        if (data.has_word) fileTypes.push('Word');
+        if (data.has_excel) fileTypes.push('Excel');
+        document.getElementById('preview-type').textContent = fileTypes.join(', ') || 'External Link';
+        
+        document.getElementById('preview-size').textContent = data.total_size || 'N/A';
+        
+        // Set URLs
+        document.getElementById('downloadUrl').value = data.download_url;
+        document.getElementById('detailUrl').value = data.detail_url;
+        document.getElementById('previewLink').href = data.detail_url;
+        document.getElementById('adminLink').href = data.admin_url;
+        
+        // Scroll to preview
+        formPreview.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Show error
+    function showError(message) {
+        loadingSpinner.style.display = 'none';
+        document.querySelector('.progress-container').style.display = 'none';
+        uploadForm.style.display = 'block';
+        
+        alert('Error: ' + message);
+        updateStep(1);
+    }
+});
+
+// Copy to clipboard function
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const btn = element.nextElementSibling;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    btn.classList.add('copied');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('copied');
+    }, 2000);
+}
+
+// Reset form
+function resetForm() {
+    document.getElementById('uploadForm').reset();
+    document.getElementById('uploadForm').style.display = 'block';
+    document.getElementById('formPreview').classList.add('d-none');
+    
+    // Clear file previews
+    document.getElementById('filePreviewCards').innerHTML = '';
+    
+    // Reset steps
+    updateStep(1);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+{% endblock %}

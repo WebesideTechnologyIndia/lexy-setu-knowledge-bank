@@ -1,0 +1,111 @@
+{% extends 'links/base.html' %}
+
+{% block title %}Home - Knowledge Bank{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <h1 class="display-4 text-primary mb-3">
+        <i class="fas fa-link"></i> Knowledge Bank
+    </h1>
+    <p class="lead text-muted">
+        Quick access to important government and official links
+    </p>
+</div>
+
+<div class="row">
+    {% for category in categories %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card category-card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-folder-open me-2"></i>
+                    {{ category.name }}
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                {% if category.description %}
+                <p class="card-text text-muted">{{ category.description }}</p>
+                {% endif %}
+                
+                <h6 class="text-secondary mb-3">
+                    <i class="fas fa-list"></i> Sub Categories:
+                </h6>
+                
+                {% for subcategory in category.subcategories.all %}
+                    {% if subcategory.is_active %}
+                    <div class="mb-2">
+                        <a href="{% url 'links:subcategory_detail' category.slug subcategory.slug %}" 
+                           class="btn btn-outline-primary btn-sm w-100 text-start">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            {{ subcategory.name }}
+                            <span class="badge bg-secondary float-end">
+                                {{ subcategory.links.count }}
+                            </span>
+                        </a>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <p class="text-muted">No subcategories available.</p>
+                {% endfor %}
+            </div>
+            
+            <div class="card-footer bg-light">
+                <a href="{% url 'links:category_detail' category.slug %}" 
+                   class="btn btn-primary w-100">
+                    <i class="fas fa-eye me-2"></i>
+                    View All Links
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <h4><i class="fas fa-info-circle me-2"></i>No Categories Available</h4>
+            <p class="mb-0">Please add some categories from the admin panel.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Quick Stats -->
+{% if categories %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                </h5>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h3 class="text-primary">{{ categories.count }}</h3>
+                        <p class="text-muted">Categories</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 class="text-success">
+                            {% regroup categories by name as category_list %}
+                            {{ category_list|length }}+
+                        </h3>
+                        <p class="text-muted">Sub Categories</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 class="text-warning">
+                            <i class="fas fa-link"></i> Links
+                        </h3>
+                        <p class="text-muted">Available</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 class="text-info">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </h3>
+                        <p class="text-muted">Click to Access</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

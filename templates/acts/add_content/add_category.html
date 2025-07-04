@@ -1,0 +1,212 @@
+<!-- templates/acts/add_content/add_category.html -->
+{% extends 'acts/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Knowledge Bank{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <!-- Form Header -->
+            <div class="form-header">
+                <h2 class="mb-2">
+                    <i class="fas fa-folder-plus me-3"></i>
+                    {{ title }}
+                </h2>
+                <p class="mb-0">Create a new category to organize your acts and legal documents</p>
+            </div>
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Form Container -->
+            <div class="form-container">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-2"></i>Category Name *
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sort-numeric-up me-2"></i>Display Order
+                                </label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.order.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.icon.id_for_label }}" class="form-label">
+                            <i class="fas fa-icons me-2"></i>Icon Class
+                        </label>
+                        {{ form.icon }}
+                        <small class="form-text text-muted">
+                            Use Font Awesome classes like "fas fa-calculator", "fas fa-landmark", etc.
+                        </small>
+                        {% if form.icon.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.icon.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                <i class="fas fa-toggle-on me-2"></i>Active
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Uncheck to hide this category from public view
+                        </small>
+                        {% if form.is_active.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.is_active.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'acts:add_content_home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-submit">
+                            <i class="fas fa-save me-2"></i>Create Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-info-circle me-2"></i>Tips for Creating Categories
+                </h6>
+                <ul class="small mb-0">
+                    <li class="mb-2"><strong>Name:</strong> Use clear, descriptive names like "Direct Tax", "Indirect Tax", "Corporate Law"</li>
+                    <li class="mb-2"><strong>Order:</strong> Lower numbers appear first (e.g., 1, 2, 3...)</li>
+                    <li class="mb-2"><strong>Icon:</strong> Browse <a href="https://fontawesome.com/icons" target="_blank">Font Awesome</a> for icon classes</li>
+                    <li><strong>Description:</strong> Provide a brief description to help users understand the category</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ form.media }}
+<script>
+    // Preview icon functionality
+    document.getElementById('{{ form.icon.id_for_label }}').addEventListener('input', function() {
+        const iconClass = this.value;
+        // You can add icon preview functionality here
+    });
+    
+    // Auto-fill order number
+    {% if not form.instance.pk %}
+        // This would be a new category, set a default order
+        const orderField = document.getElementById('{{ form.order.id_for_label }}');
+        if (!orderField.value) {
+            orderField.value = 1;
+        }
+    {% endif %}
+</script>
+{% endblock %}

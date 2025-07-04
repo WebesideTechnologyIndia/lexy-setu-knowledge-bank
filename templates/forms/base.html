@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tax Forms Portal - Download Indian Tax Forms{% endblock %}</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="{% block meta_description %}Download Indian Tax Forms, ITR Forms, and other government forms. Quick access to all official forms with direct download links.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}tax forms, ITR forms, income tax, india, government forms{% endblock %}">
+    <meta name="author" content="Tax Forms Portal">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 80px 0;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-custom {
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+            border: none;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+        
+        .category-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .category-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .form-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .form-item:hover {
+            background: #f8f9fa;
+            border-left-color: var(--accent-color);
+        }
+        
+        .download-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            background: #229954;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .search-box {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .search-box input {
+            border-radius: 25px;
+            padding: 15px 50px 15px 20px;
+            border: 1px solid #ddd;
+            font-size: 1.1rem;
+        }
+        
+        .search-box button {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            bottom: 5px;
+            border: none;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 20px;
+            padding: 0 20px;
+        }
+        
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            padding: 40px 0 20px;
+            margin-top: 80px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 50px 0;
+            }
+            
+            .category-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .form-item {
+                padding: 15px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--primary-color);">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'forms:home' %}">
+                <i class="fas fa-file-alt me-2"></i>Tax Forms Portal
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'forms:home' %}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'forms:popular' %}">
+                            <i class="fas fa-fire me-1"></i>Popular Forms
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'forms:recent' %}">
+                            <i class="fas fa-clock me-1"></i>Recent Forms
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'forms:upload_form' %}">
+                            <i class="fas fa-upload me-1"></i>Upload Form
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>Manage
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'forms:manage_categories' %}">
+                                <i class="fas fa-folder me-2"></i>Categories
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'forms:manage_forms' %}">
+                                <i class="fas fa-file-alt me-2"></i>Forms
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank">
+                                <i class="fas fa-tools me-2"></i>Admin Panel
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <!-- Search Box -->
+                <form class="d-flex" method="GET" action="{% url 'forms:search' %}">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q" placeholder="Search forms..." 
+                               value="{{ request.GET.q }}" style="border-radius: 20px 0 0 20px;">
+                        <button class="btn btn-light" type="submit" style="border-radius: 0 20px 20px 0;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show alert-custom" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Breadcrumb -->
+    {% block breadcrumb %}{% endblock %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5><i class="fas fa-file-alt me-2"></i>Tax Forms Portal</h5>
+                    <p class="text-light">Your one-stop destination for downloading Indian tax forms, ITR forms, and other government documents.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-light me-3"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-linkedin fa-lg"></i></a>
+                        <a href="#" class="text-light"><i class="fab fa-instagram fa-lg"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'forms:home' %}" class="text-light text-decoration-none">Home</a></li>
+                        <li><a href="{% url 'forms:popular' %}" class="text-light text-decoration-none">Popular Forms</a></li>
+                        <li><a href="{% url 'forms:recent' %}" class="text-light text-decoration-none">Recent Forms</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6>Categories</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light text-decoration-none">Income Tax Forms</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">ROC Forms</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">GST Forms</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Company Forms</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 mb-4">
+                    <h6>Contact Info</h6>
+                    <ul class="list-unstyled text-light">
+                        <li><i class="fas fa-envelope me-2"></i>info@taxforms.com</li>
+                        <li><i class="fas fa-phone me-2"></i>+91 99999 99999</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i>New Delhi, India</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="text-light">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-light mb-0">&copy; 2025 Tax Forms Portal. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="text-light text-decoration-none me-3">Privacy Policy</a>
+                    <a href="#" class="text-light text-decoration-none">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Search autocomplete (basic)
+        const searchInput = document.querySelector('input[name="q"]');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                // Add autocomplete functionality here if needed
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

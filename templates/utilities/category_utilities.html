@@ -1,0 +1,289 @@
+<!-- templates/utilities/category_utilities.html -->
+{% extends 'utilities/base.html' %}
+
+{% block title %}{{ category.display_name }} - Utilities{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-9">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-folder"></i> {{ category.display_name }}
+                    {% if search_query %}
+                        <small class="text-muted">- Search results for "{{ search_query }}"</small>
+                    {% endif %}
+                </h2>
+                {% if category.description %}
+                    <p class="text-muted">{{ category.description }}</p>
+                {% endif %}
+                <p class="text-muted mb-0">{{ utilities|length }} utilities found</p>
+            </div>
+            <a href="{% url 'utility_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Utility
+            </a>
+        </div>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'utility_list' %}">
+                        <i class="fas fa-home"></i> All Utilities
+                    </a>
+                </li>
+                {% if category.parent %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'category_utilities' category.parent.pk %}">
+                            {{ category.parent.display_name }}
+                        </a>
+                    </li>
+                {% endif %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ category.display_name }}
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Search Form -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <form method="get" class="d-flex">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search in {{ category.display_name }}..." 
+                           value="{{ search_query }}">
+                    <button class="btn btn-outline-primary ms-2" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    {% if search_query %}
+                        <a href="{% url 'category_utilities' category.pk %}" 
+                           class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        
+        <!-- Utilities Grid -->
+        {% if utilities %}
+            <div class="row">
+                {% for utility in utilities %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'utility_detail' utility.pk %}" class="text-decoration-none">
+                                        {{ utility.title|truncatechars:50 }}
+                                    </a>
+                                </h6>
+                                <span class="badge bg-{% if utility.priority == 'urgent' %}danger{% elif utility.priority == 'high' %}warning{% elif utility.priority == 'medium' %}info{% else %}secondary{% endif %} priority-badge">
+                                    {{ utility.get_priority_display }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                {% if utility.is_featured %}
+                                    <span class="badge bg-success mb-2">Featured</span>
+                                {% endif %}
+                                
+                                <div class="utility-content">
+                                    {{ utility.content|striptags|truncatechars:150 }}
+                                </div>
+                                
+                                {% if utility.get_tags_list %}
+                                    <div class="mt-2">
+                                        {% for tag in utility.get_tags_list %}
+                                            <span class="badge bg-light text-dark me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> {{ utility.created_at|date:"M d, Y" }}
+                                    </small>
+                                    <div>
+                                        <a href="{% url 'utility_detail' utility.pk %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'utility_edit' utility.pk %}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if utilities.has_other_pages %}
+                <nav aria-label="Category utilities pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if utilities.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ utilities.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ utilities.number }} of {{ utilities.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if utilities.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ utilities.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ utilities.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <h4>No utilities found</h4>
+                <p class="text-muted">
+                    {% if search_query %}
+                        No utilities match your search criteria in this category. Try different keywords.
+                    {% else %}
+                        This category doesn't have any utilities yet.
+                    {% endif %}
+                </p>
+                <a href="{% url 'utility_add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add First Utility to {{ category.display_name }}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="sidebar">
+            <!-- Category Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Category Info
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>{{ category.display_name }}</h6>
+                    {% if category.description %}
+                        <p class="text-muted small">{{ category.description }}</p>
+                    {% endif %}
+                    
+                    <!-- Parent Category -->
+                    {% if category.parent %}
+                        <div class="mb-2">
+                            <small class="text-muted">Parent Category:</small><br>
+                            <a href="{% url 'category_utilities' category.parent.pk %}" class="text-decoration-none">
+                                <i class="fas fa-folder-open"></i> {{ category.parent.display_name }}
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Subcategories -->
+                    {% if category.subcategories.all %}
+                        <div class="mb-2">
+                            <small class="text-muted">Subcategories:</small><br>
+                            {% for subcategory in category.subcategories.all %}
+                                <a href="{% url 'category_utilities' subcategory.pk %}" class="d-block text-decoration-none">
+                                    <i class="fas fa-folder"></i> {{ subcategory.display_name }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Quick Stats -->
+                    <div class="mt-3 pt-3 border-top">
+                        <small class="text-muted">Total Utilities:</small>
+                        <h5 class="text-primary mb-0">{{ utilities.paginator.count|default:utilities|length }}</h5>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tools"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'utility_add' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add New Utility
+                        </a>
+                        <a href="{% url 'utility_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-list"></i> All Utilities
+                        </a>
+                        <a href="{% url 'category_list' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-folder"></i> All Categories
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Utilities in Category -->
+            {% if category.utilities.all %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-clock"></i> Recent in Category
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% for recent in category.utilities.all|slice:":5" %}
+                            <div class="mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                <a href="{% url 'utility_detail' recent.pk %}" class="text-decoration-none">
+                                    <small class="d-block fw-bold">{{ recent.title|truncatechars:30 }}</small>
+                                </a>
+                                <small class="text-muted">{{ recent.created_at|date:"M d" }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .priority-badge {
+        font-size: 0.75rem;
+    }
+    
+    .sidebar .card {
+        border: 1px solid #dee2e6;
+    }
+    
+    .utility-content {
+        line-height: 1.6;
+    }
+    
+    .breadcrumb {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

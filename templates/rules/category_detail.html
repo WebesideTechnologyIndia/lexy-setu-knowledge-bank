@@ -1,0 +1,452 @@
+{% extends 'rules/base.html' %}
+
+{% block title %}{{ category.name }} - Knowledge Bank{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Breadcrumb Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-light p-3 rounded">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:home' %}"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Category Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient text-white p-4" style="background: linear-gradient(135deg, #43a047 0%, #1e88e5 100%);">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="{{ category.icon|default:'fas fa-gavel' }} fa-3x me-4"></i>
+                            <div>
+                                <h1 class="h2 mb-2 fw-bold">{{ category.name }}</h1>
+                                {% if category.description %}
+                                    <p class="mb-0 opacity-75">{{ category.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-2"></i>Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_subcategory' %}">
+                                        <i class="fas fa-plus me-2"></i>Add SubCategory
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_chapter' %}">
+                                        <i class="fas fa-book me-2"></i>Add Chapter
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_rule' %}">
+                                        <i class="fas fa-file-contract me-2"></i>Add Rule
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" action="{% url 'rules:search' %}">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" class="form-control" name="q" 
+                                   placeholder="Search within {{ category.name }}..." 
+                                   value="{{ request.GET.q }}">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- SubCategories -->
+            {% if subcategories %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-folder-open me-2"></i>SubCategories ({{ subcategories.count }})
+                    </h4>
+                    <a href="{% url 'rules:add_subcategory' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add SubCategory
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for subcategory in subcategories %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold">
+                                        <a href="{% url 'rules:subcategory_detail' category.slug subcategory.slug %}" class="text-decoration-none">
+                                            {{ subcategory.name }}
+                                        </a>
+                                    </h6>
+                                    {% if subcategory.description %}
+                                        <p class="card-text small text-muted">{{ subcategory.description|truncatewords:15 }}</p>
+                                    {% endif %}
+                                    <div class="row text-center small">
+                                        <div class="col-6">
+                                            <strong class="text-success">{{ subcategory.chapters.count }}</strong>
+                                            <div class="text-muted">Chapters</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong class="text-warning">
+                                                {% for chapter in subcategory.chapters.all %}{{ chapter.rules.count }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                                            </strong>
+                                            <div class="text-muted">Rules</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-0">
+                                    <a href="{% url 'rules:subcategory_detail' category.slug subcategory.slug %}" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- All Rules in Category -->
+            {% if all_rules %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-contract me-2"></i>All Rules in {{ category.name }} ({{ all_rules|length }})
+                    </h4>
+                    <a href="{% url 'rules:add_rule' %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus me-2"></i>Add Rule
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for rule in all_rules %}
+                        <div class="list-group-item regulation-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold d-flex align-items-center">
+                                        <a href="{{ rule.get_absolute_url }}" class="text-decoration-none">
+                                            {{ rule.name }}
+                                            {% if rule.rule_number %}
+                                                <span class="rule-badge ms-2">Rule {{ rule.rule_number }}</span>
+                                            {% endif %}
+                                        </a>
+                                    </h6>
+                                    {% if rule.short_description %}
+                                        <p class="mb-2 text-muted">{{ rule.short_description|truncatewords:25 }}</p>
+                                    {% endif %}
+                                    <div class="small text-muted">
+                                        <i class="fas fa-sitemap me-1"></i>
+                                        {{ rule.chapter.subcategory.name }} → {{ rule.chapter.name }}
+                                        {% if rule.effective_date %}
+                                            <span class="ms-3">
+                                                <i class="fas fa-calendar me-1"></i>Effective: {{ rule.effective_date|date:"M d, Y" }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="text-end ms-3">
+                                    {% if rule.is_featured %}
+                                        <span class="badge bg-warning text-dark mb-2">
+                                            <i class="fas fa-star me-1"></i>Featured
+                                        </span><br>
+                                    {% endif %}
+                                    {% if rule.status %}
+                                        <span class="badge bg-info text-white mb-2">
+                                            {{ rule.status|title }}
+                                        </span><br>
+                                    {% endif %}
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ rule.get_absolute_url }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'rules:add_section' %}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-info" onclick="shareRule('{{ rule.name }}', '{{ rule.get_absolute_url }}')">
+                                            <i class="fas fa-share-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-file-contract fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">No Rules Found</h4>
+                    <p class="text-muted mb-4">
+                        There are no rules in the {{ category.name }} category yet.
+                        <br>Start by creating subcategories, chapters, and then add rules.
+                    </p>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        {% if not subcategories %}
+                            <a href="{% url 'rules:add_subcategory' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add SubCategory First
+                            </a>
+                        {% else %}
+                            <a href="{% url 'rules:add_chapter' %}" class="btn btn-info">
+                                <i class="fas fa-book me-2"></i>Add Chapter
+                            </a>
+                            <a href="{% url 'rules:add_rule' %}" class="btn btn-success">
+                                <i class="fas fa-file-contract me-2"></i>Add Rule
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Category Stats -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Category Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-primary mb-1">{{ subcategories.count }}</div>
+                            <small class="text-muted">SubCategories</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-success mb-1">
+                                {% for subcategory in subcategories %}{{ subcategory.chapters.count }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                            </div>
+                            <small class="text-muted">Chapters</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-warning mb-1">{{ all_rules|length }}</div>
+                            <small class="text-muted">Rules</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-info mb-1">{{ featured_rules|length }}</div>
+                            <small class="text-muted">Featured</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Rules -->
+            {% if featured_rules %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>Featured Rules
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for rule in featured_rules|slice:":3" %}
+                    <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <h6 class="fw-bold">
+                            <a href="{{ rule.get_absolute_url }}" class="text-decoration-none">
+                                {{ rule.name }}
+                                {% if rule.rule_number %}
+                                    <small class="rule-badge ms-1">{{ rule.rule_number }}</small>
+                                {% endif %}
+                            </a>
+                        </h6>
+                        {% if rule.short_description %}
+                            <p class="small text-muted mb-1">{{ rule.short_description|truncatewords:10 }}</p>
+                        {% endif %}
+                        <small class="text-info">{{ rule.chapter.subcategory.name }} → {{ rule.chapter.name }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Rules -->
+            {% if recent_rules %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Recently Added
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for rule in recent_rules|slice:":5" %}
+                    <div class="mb-2">
+                        <a href="{{ rule.get_absolute_url }}" class="text-decoration-none d-block">
+                            <strong>{{ rule.name }}</strong>
+                            {% if rule.rule_number %}
+                                <small class="text-muted">(Rule {{ rule.rule_number }})</small>
+                            {% endif %}
+                        </a>
+                        <small class="text-muted">Added: {{ rule.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    {% if not forloop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Rule Status Summary -->
+            {% if rule_status_summary %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>Rule Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for status, count in rule_status_summary.items %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-capitalize">{{ status|default:"Draft" }}</span>
+                        <span class="badge bg-secondary">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'rules:add_subcategory' %}" class="btn btn-primary">
+                            <i class="fas fa-folder-plus me-2"></i>Add SubCategory
+                        </a>
+                        <a href="{% url 'rules:add_chapter' %}" class="btn btn-info">
+                            <i class="fas fa-book me-2"></i>Add Chapter
+                        </a>
+                        <a href="{% url 'rules:add_rule' %}" class="btn btn-success">
+                            <i class="fas fa-file-contract me-2"></i>Add Rule
+                        </a>
+                        <a href="{% url 'rules:add_section' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Add Section
+                        </a>
+                        <hr>
+                        <a href="{% url 'rules:export_category' category.slug %}" class="btn btn-outline-info">
+                            <i class="fas fa-download me-2"></i>Export Category
+                        </a>
+                        <a href="{% url 'rules:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+.regulation-item {
+    border-left: 4px solid #43a047;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+.rule-badge {
+    background: linear-gradient(135deg, #43a047 0%, #1e88e5 100%);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .regulation-item {
+        border-left: 3px solid #43a047;
+        padding-left: 0.75rem;
+    }
+}
+</style>
+
+<script>
+// Share rule functionality
+function shareRule(title, url) {
+    if (navigator.share) {
+        navigator.share({
+            title: `Rule: ${title}`,
+            url: window.location.origin + url
+        }).catch(console.error);
+    } else {
+        // Fallback to clipboard
+        const fullUrl = window.location.origin + url;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            // Show toast notification
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        Rule link copied to clipboard!
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', () => {
+                document.body.removeChild(toast);
+            });
+        }).catch(() => {
+            alert('Could not copy link to clipboard');
+        });
+    }
+}
+</script>
+{% endblock %}

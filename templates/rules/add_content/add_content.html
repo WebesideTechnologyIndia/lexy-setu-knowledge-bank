@@ -1,0 +1,268 @@
+{% extends 'rules/base.html' %}
+
+{% block title %}Home - Rules Knowledge Bank{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="jumbotron bg-gradient p-5 rounded-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="container">
+                    <h1 class="display-4 mb-4">
+                        <i class="fas fa-gavel me-3"></i>
+                        Rules Knowledge Bank
+                    </h1>
+                    <p class="lead mb-4">
+                        Comprehensive database of tax rules, regulations, notifications, and circulars
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form method="get" action="{% url 'rules:search' %}" class="mb-3">
+                                <div class="input-group input-group-lg">
+                                    <input type="text" class="form-control" name="q" placeholder="Search rules, regulations, circulars..." value="{{ request.GET.q }}">
+                                    <button class="btn btn-light" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Featured Categories -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Browse by Category</h2>
+        </div>
+        {% if categories %}
+            {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="{{ category.icon|default:'fas fa-folder-open' }} fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">{{ category.name }}</h5>
+                        <p class="card-text">{{ category.description|truncatewords:15 }}</p>
+                        <a href="{% url 'rules:category_detail' category.slug %}" class="btn btn-primary">
+                            View {{ category.rules.count }} Rules
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h4>No Categories Yet</h4>
+                    <p>Start by adding some categories and rules to your knowledge bank.</p>
+                    <a href="{% url 'rules:add_content_home' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Content
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Featured Rules -->
+    {% if featured_rules %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Featured Rules</h2>
+        </div>
+        {% for rule in featured_rules %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ rule.name }}</h5>
+                    <p class="card-text">{{ rule.short_description|truncatewords:20 }}</p>
+                    <div class="small text-muted mb-3">
+                        <i class="fas fa-tag me-1"></i>{{ rule.category.name }}
+                        {% if rule.notification_date %}
+                            <span class="ms-2">
+                                <i class="fas fa-calendar me-1"></i>{{ rule.notification_date|date:"M Y" }}
+                            </span>
+                        {% endif %}
+                        {% if rule.rule_number %}
+                            <span class="ms-2">
+                                <i class="fas fa-hashtag me-1"></i>{{ rule.rule_number }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'rules:rule_detail' rule.category.slug rule.slug %}" class="btn btn-outline-primary">
+                        View Details
+                    </a>
+                    {% if rule.is_active %}
+                        <span class="badge bg-success ms-2">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary ms-2">Superseded</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Recent Notifications -->
+    {% if recent_notifications %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Recent Notifications & Circulars</h2>
+        </div>
+        <div class="col-12">
+            <div class="list-group">
+                {% for notification in recent_notifications %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ notification.title }}</h6>
+                        <small>{{ notification.notification_date }}</small>
+                    </div>
+                    <p class="mb-1">{{ notification.summary|truncatewords:25 }}</p>
+                    <small class="text-muted">
+                        <i class="fas fa-file-alt me-1"></i>{{ notification.rule.name }}
+                        {% if notification.circular_number %}
+                            | Circular No: {{ notification.circular_number }}
+                        {% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Latest Amendments -->
+    {% if recent_amendments %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Latest Amendments</h2>
+        </div>
+        <div class="col-12">
+            <div class="row">
+                {% for amendment in recent_amendments %}
+                <div class="col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-edit text-warning me-2"></i>{{ amendment.rule.name }}
+                            </h6>
+                            <p class="card-text small">{{ amendment.description|truncatewords:15 }}</p>
+                            <small class="text-muted">
+                                Effective from: {{ amendment.effective_date }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Stats -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Quick Stats</h2>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-primary">{{ categories|length }}</h2>
+                    <p class="card-text">Categories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-success">{{ featured_rules|length }}</h2>
+                    <p class="card-text">Featured Rules</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-info">{{ recent_notifications|length }}</h2>
+                    <p class="card-text">Recent Updates</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-warning">{{ active_rules_count|default:0 }}</h2>
+                    <p class="card-text">Active Rules</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-danger">{{ recent_amendments|length }}</h2>
+                    <p class="card-text">Amendments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <a href="{% url 'rules:add_content_home' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add Content
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->    
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Quick Actions</h2>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-2x text-primary mb-3"></i>
+                    <h6>Add New Rule</h6>
+                    <a href="{% url 'rules:add_rule' %}" class="btn btn-outline-primary btn-sm">Add Rule</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-bell fa-2x text-success mb-3"></i>
+                    <h6>Add Notification</h6>
+                    <a href="{% url 'rules:add_notification' %}" class="btn btn-outline-success btn-sm">Add Notification</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-edit fa-2x text-warning mb-3"></i>
+                    <h6>Add Amendment</h6>
+                    <a href="{% url 'rules:add_amendment' %}" class="btn btn-outline-warning btn-sm">Add Amendment</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-2x text-info mb-3"></i>
+                    <h6>View Reports</h6>
+                    <a href="{% url 'rules:reports' %}" class="btn btn-outline-info btn-sm">View Reports</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

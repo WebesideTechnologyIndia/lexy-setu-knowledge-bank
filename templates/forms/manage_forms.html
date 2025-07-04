@@ -1,0 +1,491 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}Manage Forms - Tax Forms Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        padding: 40px 0;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        border-left: 4px solid #3498db;
+    }
+    
+    .form-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+    
+    .form-header {
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .form-actions {
+        padding: 15px 20px;
+        background: #f8f9fa;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stats-box {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .file-type-badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+    
+    .download-stats {
+        background: #e9ecef;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="fas fa-file-alt me-3"></i>Manage Forms
+                </h1>
+                <p class="lead mb-0">View, edit, and manage all your uploaded forms</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="d-flex gap-3">
+                    <div class="stats-box bg-white bg-opacity-20 flex-grow-1">
+                        <h3 class="display-6 fw-bold">{{ forms.paginator.count }}</h3>
+                        <p class="mb-0">Total Forms</p>
+                    </div>
+                    <div class="stats-box bg-white bg-opacity-20 flex-grow-1">
+                        <h3 class="display-6 fw-bold">{{ categories.count }}</h3>
+                        <p class="mb-0">Categories</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container my-5">
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'forms:upload_form' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Add New Form
+                    </a>
+                    <a href="{% url 'forms:manage_categories' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-folder me-2"></i>Manage Categories
+                    </a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary" target="_blank">
+                        <i class="fas fa-tools me-2"></i>Admin Panel
+                    </a>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-info" onclick="exportForms()">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="bulkActions()">
+                        <i class="fas fa-edit me-1"></i>Bulk Edit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filter-section">
+        <h5 class="mb-3">
+            <i class="fas fa-filter me-2"></i>Filter Forms
+        </h5>
+        
+        <form method="GET" class="row g-3">
+            <!-- Category Filter -->
+            <div class="col-md-3">
+                <label for="category" class="form-label fw-bold">Category</label>
+                <select class="form-select" name="category" id="category">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Search -->
+            <div class="col-md-3">
+                <label for="search" class="form-label fw-bold">Search</label>
+                <input type="text" class="form-control" name="search" id="search" 
+                       placeholder="Form number or title..." value="{{ request.GET.search }}">
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="col-md-2">
+                <label for="status" class="form-label fw-bold">Status</label>
+                <select class="form-select" name="status" id="status">
+                    <option value="">All Status</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="featured" {% if request.GET.status == 'featured' %}selected{% endif %}>Featured</option>
+                </select>
+            </div>
+            
+            <!-- File Type Filter -->
+            <div class="col-md-2">
+                <label for="file_type" class="form-label fw-bold">File Type</label>
+                <select class="form-select" name="file_type" id="file_type">
+                    <option value="">All Types</option>
+                    <option value="pdf" {% if request.GET.file_type == 'pdf' %}selected{% endif %}>PDF</option>
+                    <option value="word" {% if request.GET.file_type == 'word' %}selected{% endif %}>Word</option>
+                    <option value="excel" {% if request.GET.file_type == 'excel' %}selected{% endif %}>Excel</option>
+                    <option value="multiple" {% if request.GET.file_type == 'multiple' %}selected{% endif %}>Multiple</option>
+                </select>
+            </div>
+            
+            <!-- Filter Buttons -->
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="w-100">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-search me-1"></i>Filter
+                    </button>
+                    <a href="{% url 'forms:manage_forms' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Forms List -->
+    {% if forms %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">
+            Forms List
+            <span class="badge bg-primary">{{ forms.paginator.count }}</span>
+        </h4>
+        
+        <!-- Sort Options -->
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-sort me-1"></i>Sort by
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=form_number">Form Number</a></li>
+                <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=title">Title A-Z</a></li>
+                <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-created_at">Newest First</a></li>
+                <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-download_count">Most Downloaded</a></li>
+                <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=category__name">Category</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Forms Grid -->
+    <div class="row">
+        {% for form in forms %}
+        <div class="col-lg-6 mb-4">
+            <div class="form-card">
+                <div class="form-header">
+                    <!-- Form Title & Status -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-primary fs-6">{{ form.form_number }}</span>
+                                <span class="badge bg-secondary">{{ form.category.name }}</span>
+                                {% if form.is_featured %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-star me-1"></i>Featured
+                                </span>
+                                {% endif %}
+                                {% if not form.is_active %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </div>
+                            <h5 class="mb-1">{{ form.title|truncatewords:8 }}</h5>
+                            {% if form.assessment_year %}
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>AY: {{ form.assessment_year }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- File Type Badges -->
+                        <div class="d-flex flex-column gap-1">
+                            {% if form.pdf_file %}
+                            <span class="badge bg-danger file-type-badge">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </span>
+                            {% endif %}
+                            {% if form.word_file %}
+                            <span class="badge bg-primary file-type-badge">
+                                <i class="fas fa-file-word me-1"></i>Word
+                            </span>
+                            {% endif %}
+                            {% if form.excel_file %}
+                            <span class="badge bg-success file-type-badge">
+                                <i class="fas fa-file-excel me-1"></i>Excel
+                            </span>
+                            {% endif %}
+                            {% if form.external_url %}
+                            <span class="badge bg-info file-type-badge">
+                                <i class="fas fa-link me-1"></i>URL
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Form Description -->
+                    {% if form.description %}
+                    <p class="text-muted mb-3">
+                        {{ form.description|striptags|truncatewords:20 }}
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Download Statistics -->
+                    <div class="download-stats">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <strong>{{ form.download_count }}</strong>
+                                <small class="d-block text-muted">Total</small>
+                            </div>
+                            {% if form.pdf_file %}
+                            <div class="col-3">
+                                <strong>{{ form.pdf_download_count|default:0 }}</strong>
+                                <small class="d-block text-muted">PDF</small>
+                            </div>
+                            {% endif %}
+                            {% if form.word_file %}
+                            <div class="col-3">
+                                <strong>{{ form.word_download_count|default:0 }}</strong>
+                                <small class="d-block text-muted">Word</small>
+                            </div>
+                            {% endif %}
+                            {% if form.excel_file %}
+                            <div class="col-3">
+                                <strong>{{ form.excel_download_count|default:0 }}</strong>
+                                <small class="d-block text-muted">Excel</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <a href="{% url 'forms:form_detail' form.pk %}" 
+                               class="btn btn-outline-info btn-sm w-100" target="_blank">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'forms:edit_form' form.pk %}" 
+                               class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-success btn-sm w-100" 
+                                    onclick="toggleStatus({{ form.pk }}, {{ form.is_active|yesno:'false,true' }})">
+                                <i class="fas fa-{% if form.is_active %}eye-slash{% else %}eye{% endif %} me-1"></i>
+                                {% if form.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-danger btn-sm w-100" 
+                                    onclick="deleteForm({{ form.pk }}, '{{ form.form_number }}')">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if forms.has_other_pages %}
+    <nav aria-label="Forms pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if forms.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ forms.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in forms.paginator.page_range %}
+            {% if num == forms.number %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > forms.number|add:'-3' and num < forms.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            
+            {% if forms.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ forms.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ forms.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- No Forms -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-file-alt fa-4x text-muted"></i>
+        </div>
+        <h3 class="text-muted">No Forms Found</h3>
+        {% if request.GET.category or request.GET.search %}
+        <p class="text-muted mb-4">
+            No forms match your current filters. Try adjusting your search criteria.
+        </p>
+        <a href="{% url 'forms:manage_forms' %}" class="btn btn-primary">
+            <i class="fas fa-times me-2"></i>Clear All Filters
+        </a>
+        {% else %}
+        <p class="text-muted mb-4">
+            Start by uploading your first form.
+        </p>
+        <a href="{% url 'forms:upload_form' %}" class="btn btn-success btn-lg">
+            <i class="fas fa-plus me-2"></i>Upload First Form
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filters = ['category', 'status', 'file_type'];
+    filters.forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) {
+            element.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+    });
+});
+
+// Toggle form status
+function toggleStatus(formId, newStatus) {
+    if (confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this form?`)) {
+        fetch(`/forms/ajax/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                form_id: formId,
+                is_active: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Network error occurred');
+        });
+    }
+}
+
+// Delete form
+function deleteForm(formId, formNumber) {
+    if (confirm(`Are you sure you want to delete form "${formNumber}"? This action cannot be undone.`)) {
+        fetch(`/forms/ajax/delete-form/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                form_id: formId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Network error occurred');
+        });
+    }
+}
+
+// Export forms
+function exportForms() {
+    window.open('/forms/ajax/export/', '_blank');
+}
+
+// Bulk actions
+function bulkActions() {
+    alert('Bulk actions feature coming soon!');
+}
+</script>
+{% endblock %}

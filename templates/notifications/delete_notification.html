@@ -1,0 +1,50 @@
+# templates/notifications/delete_notification.html
+{% extends 'notifications/base.html' %}
+
+{% block title %}Delete {{ notification.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-trash"></i> Delete Notification
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning!</strong> This action cannot be undone.
+                </div>
+                
+                <p>Are you sure you want to delete the following notification?</p>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ notification.title }}</h5>
+                        <p class="card-text">
+                            <span class="badge bg-secondary">{{ notification.category.display_name }}</span>
+                        </p>
+                        <small class="text-muted">
+                            Created: {{ notification.created_at|date:"M d, Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+                
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Delete
+                        </button>
+                        <a href="{% url 'notification_detail' notification.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

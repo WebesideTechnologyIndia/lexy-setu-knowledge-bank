@@ -1,0 +1,388 @@
+<!-- templates/acts/add_content/add_act.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Act - Knowledge Bank</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+        }
+        .hierarchy-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 p-0">
+                <div class="sidebar">
+                    <div class="p-4">
+                        <h4 class="mb-4">
+                            <i class="fas fa-balance-scale me-2"></i>Tax Laws
+                        </h4>
+                        <nav class="nav flex-column">
+                            <a href="{% url 'acts:home' %}" class="nav-link text-white">
+                                <i class="fas fa-home me-2"></i>Home
+                            </a>
+                            <a href="{% url 'acts:add_content_home' %}" class="nav-link text-white">
+                                <i class="fas fa-plus me-2"></i>Add Content
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <div class="p-4">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'acts:home' %}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'acts:add_content_home' %}">Add Content</a></li>
+                            <li class="breadcrumb-item active">Add Act</li>
+                        </ol>
+                    </nav>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            <!-- Form Header -->
+                            <div class="form-header">
+                                <h2 class="mb-2">
+                                    <i class="fas fa-file-alt me-3"></i>Add New Act
+                                </h2>
+                                <p class="mb-0">Add a new act or law under a specific chapter (Category → SubCategory → Chapter → Act)</p>
+                            </div>
+                            
+                            <!-- Messages -->
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <!-- Form Container -->
+                            <div class="form-container">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    
+                                    <!-- Hierarchy Selection Section -->
+                                    <div class="hierarchy-section">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-sitemap me-2"></i>Hierarchy Selection
+                                        </h5>
+                                        <p class="text-muted small mb-3">Select the hierarchy path: Category → SubCategory → Chapter → Act</p>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label for="id_category" class="form-label">
+                                                        <i class="fas fa-folder me-2"></i>Category *
+                                                    </label>
+                                                    <select name="category" class="form-select" id="id_category" required>
+                                                        <option value="">Select Category</option>
+                                                        {% for category in categories %}
+                                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label for="id_subcategory" class="form-label">
+                                                        <i class="fas fa-folder-open me-2"></i>SubCategory *
+                                                    </label>
+                                                    <select name="subcategory" class="form-select" id="id_subcategory" required>
+                                                        <option value="">Select SubCategory</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label for="id_chapter" class="form-label">
+                                                        <i class="fas fa-book me-2"></i>Chapter *
+                                                    </label>
+                                                    <select name="chapter" class="form-select" id="id_chapter" required>
+                                                        <option value="">Select Chapter</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <label class="form-label">
+                                                        <i class="fas fa-file-alt me-2"></i>Act
+                                                    </label>
+                                                    <div class="form-control bg-light">
+                                                        <i class="fas fa-plus me-2"></i>New Act
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Act Details Section -->
+                                    <h5 class="mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>Act Details
+                                    </h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-tag me-2"></i>Act Name *
+                                                </label>
+                                                {{ form.name }}
+                                                {% if form.name.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="{{ form.year.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-calendar me-2"></i>Year
+                                                </label>
+                                                {{ form.year }}
+                                                {% if form.year.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.year.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.full_name.id_for_label }}" class="form-label">
+                                            <i class="fas fa-file-text me-2"></i>Full Official Name
+                                        </label>
+                                        {{ form.full_name }}
+                                        {% if form.full_name.errors %}
+                                            <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="{{ form.act_number.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-hashtag me-2"></i>Act Number
+                                                </label>
+                                                {{ form.act_number }}
+                                                <small class="form-text text-muted">e.g., 43 OF 1961</small>
+                                                {% if form.act_number.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.act_number.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="{{ form.order.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-sort-numeric-up me-2"></i>Display Order
+                                                </label>
+                                                {{ form.order }}
+                                                {% if form.order.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.order.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="{{ form.enacted_date.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-calendar-plus me-2"></i>Enacted Date
+                                                </label>
+                                                {{ form.enacted_date }}
+                                                {% if form.enacted_date.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.enacted_date.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="{{ form.effective_date.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-calendar-check me-2"></i>Effective Date
+                                                </label>
+                                                {{ form.effective_date }}
+                                                {% if form.effective_date.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.effective_date.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="{{ form.last_amended_date.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-calendar-alt me-2"></i>Last Amended
+                                                </label>
+                                                {{ form.last_amended_date }}
+                                                {% if form.last_amended_date.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.last_amended_date.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.short_description.id_for_label }}" class="form-label">
+                                            <i class="fas fa-align-left me-2"></i>Short Description
+                                        </label>
+                                        {{ form.short_description }}
+                                        {% if form.short_description.errors %}
+                                            <div class="text-danger small mt-1">{{ form.short_description.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.long_description.id_for_label }}" class="form-label">
+                                            <i class="fas fa-file-text me-2"></i>Detailed Description
+                                        </label>
+                                        {{ form.long_description }}
+                                        {% if form.long_description.errors %}
+                                            <div class="text-danger small mt-1">{{ form.long_description.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.amendments.id_for_label }}" class="form-label">
+                                            <i class="fas fa-edit me-2"></i>Amendments
+                                        </label>
+                                        {{ form.amendments }}
+                                        {% if form.amendments.errors %}
+                                            <div class="text-danger small mt-1">{{ form.amendments.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                {{ form.is_active }}
+                                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                                    <i class="fas fa-toggle-on me-2"></i>Active
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                {{ form.is_featured }}
+                                                <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                                    <i class="fas fa-star me-2"></i>Featured
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Submit Buttons -->
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <a href="{% url 'acts:add_content_home' %}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                        </a>
+                                        <button type="submit" class="btn btn-submit">
+                                            <i class="fas fa-save me-2"></i>Create Act
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{ form.media }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dynamic dropdown loading for hierarchy
+        document.getElementById('id_category').addEventListener('change', function() {
+            const categoryId = this.value;
+            const subcategorySelect = document.getElementById('id_subcategory');
+            const chapterSelect = document.getElementById('id_chapter');
+            
+            // Reset subsequent dropdowns
+            subcategorySelect.innerHTML = '<option value="">Select SubCategory</option>';
+            chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+            
+            if (categoryId) {
+                fetch(`/acts/ajax/subcategories/?category_id=${categoryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.subcategories.forEach(sub => {
+                            subcategorySelect.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading subcategories:', error);
+                    });
+            }
+        });
+        
+        document.getElementById('id_subcategory').addEventListener('change', function() {
+            const subcategoryId = this.value;
+            const chapterSelect = document.getElementById('id_chapter');
+            
+            // Reset chapter dropdown
+            chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+            
+            if (subcategoryId) {
+                fetch(`/acts/ajax/chapters/?subcategory_id=${subcategoryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.chapters.forEach(chapter => {
+                            chapterSelect.innerHTML += `<option value="${chapter.id}">${chapter.name}</option>`;
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading chapters:', error);
+                    });
+            }
+        });
+        
+        // Form validation to ensure chapter is selected
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const chapterSelect = document.getElementById('id_chapter');
+            if (!chapterSelect.value) {
+                e.preventDefault();
+                alert('Please select a Chapter first!');
+                chapterSelect.focus();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}Tax Forms Portal - Download Indian Tax Forms, ITR Forms & Government Documents{% endblock %}
+
+{% block meta_description %}Download latest Indian tax forms, ITR forms, ROC forms, GST forms and other government documents. Quick access to all official forms with direct download links.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Download Tax Forms <span class="text-warning">Instantly</span>
+                </h1>
+                <p class="lead mb-4">
+                    Access all Indian government forms including ITR forms, ROC forms, GST forms and more. 
+                    Quick downloads with direct links to official documents.
+                </p>
+                
+                <!-- Search Box -->
+                <div class="search-box mb-4">
+                    <form method="GET" action="{% url 'forms:search' %}">
+                        <input type="text" name="q" class="form-control form-control-lg" 
+                               placeholder="Search for forms (e.g., ITR-1, GST-1, ROC-1)" 
+                               value="{{ request.GET.q }}">
+                        <button type="submit" class="btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'forms:popular' %}" class="btn btn-custom btn-lg">
+                        <i class="fas fa-fire me-2"></i>Popular Forms
+                    </a>
+                    <a href="{% url 'forms:recent' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-clock me-2"></i>Latest Forms
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 text-center">
+                <div class="hero-image">
+                    <i class="fas fa-file-download" style="font-size: 12rem; color: rgba(255,255,255,0.3);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number">{{ total_forms|default:"500+" }}</div>
+                    <p class="text-muted mb-0">Total Forms</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number">{{ categories.count }}+</div>
+                    <p class="text-muted mb-0">Categories</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number">{{ total_downloads|default:"10K+" }}</div>
+                    <p class="text-muted mb-0">Downloads</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="stats-number">24/7</div>
+                    <p class="text-muted mb-0">Available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold text-primary">Browse by Category</h2>
+            <p class="lead text-muted">Choose from our organized categories to find the forms you need</p>
+        </div>
+        
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <a href="{% url 'forms:category_forms' category.slug %}" class="text-decoration-none">
+                    <div class="category-card">
+                        <div class="category-icon">
+                            {% if 'income' in category.name|lower %}
+                                <i class="fas fa-calculator"></i>
+                            {% elif 'roc' in category.name|lower %}
+                                <i class="fas fa-building"></i>
+                            {% elif 'gst' in category.name|lower %}
+                                <i class="fas fa-receipt"></i>
+                            {% elif 'company' in category.name|lower %}
+                                <i class="fas fa-briefcase"></i>
+                            {% elif 'llp' in category.name|lower %}
+                                <i class="fas fa-handshake"></i>
+                            {% elif 'wealth' in category.name|lower %}
+                                <i class="fas fa-coins"></i>
+                            {% elif 'service' in category.name|lower %}
+                                <i class="fas fa-tools"></i>
+                            {% elif 'fema' in category.name|lower %}
+                                <i class="fas fa-globe"></i>
+                            {% else %}
+                                <i class="fas fa-file-alt"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="text-primary">{{ category.name }}</h5>
+                        <p class="text-muted">{{ category.forms.count }} forms available</p>
+                        {% if category.description %}
+                            <small class="text-muted">{{ category.description|truncatewords:15 }}</small>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No categories available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Forms Section -->
+{% if featured_forms %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold text-primary">Featured Forms</h2>
+            <p class="lead text-muted">Most commonly used and important forms</p>
+        </div>
+        
+        <div class="row">
+            {% for form in featured_forms %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary">{{ form.form_number }}</span>
+                            <span class="badge bg-success">
+                                {% if form.file_type == 'pdf' %}PDF{% elif form.file_type == 'word' %}Word{% elif form.file_type == 'excel' %}Excel{% else %}{{ form.file_type|title }}{% endif %}
+                            </span>
+                        </div>
+                        
+                        <h5 class="card-title">{{ form.title|truncatewords:8 }}</h5>
+                        <p class="card-text text-muted">
+                            {% if form.description %}
+                                {{ form.description|striptags|truncatewords:15 }}
+                            {% else %}
+                                {{ form.category.name }} form for download
+                            {% endif %}
+                        </p>
+                        
+                        {% if form.assessment_year %}
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-calendar me-1"></i>AY: {{ form.assessment_year }}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-download me-1"></i>{{ form.download_count }} downloads
+                            </small>
+                            <div>
+                                <a href="{% url 'forms:form_detail' form.pk %}" class="btn btn-outline-primary btn-sm me-2">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{% url 'forms:download_form' form.pk %}" class="download-btn btn-sm">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'forms:popular' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-fire me-2"></i>View All Popular Forms
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Forms Section -->
+{% if recent_forms %}
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold text-primary">Recently Added</h2>
+            <p class="lead text-muted">Latest forms added to our collection</p>
+        </div>
+        
+        <div class="row">
+            {% for form in recent_forms %}
+            <div class="col-lg-6 mb-3">
+                <div class="form-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-primary me-2">{{ form.form_number }}</span>
+                                <span class="badge bg-secondary me-2">{{ form.category.name }}</span>
+                                {% if form.assessment_year %}
+                                <span class="badge bg-info">{{ form.assessment_year }}</span>
+                                {% endif %}
+                            </div>
+                            <h6 class="mb-1">{{ form.title|truncatewords:10 }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>Added {{ form.created_at|timesince }} ago
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a href="{% url 'forms:form_detail' form.pk %}" class="btn btn-outline-primary btn-sm me-1">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'forms:download_form' form.pk %}" class="download-btn btn-sm">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'forms:recent' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-clock me-2"></i>View All Recent Forms
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Popular Categories Quick Access -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h3>Quick Access to Popular Forms</h3>
+            <p class="mb-4">Direct links to most searched forms</p>
+        </div>
+        
+        <div class="row text-center">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{% url 'forms:search' %}?q=ITR-1" class="btn btn-outline-light btn-lg w-100">
+                    <i class="fas fa-file-alt d-block mb-2" style="font-size: 2rem;"></i>
+                    ITR-1 Forms
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{% url 'forms:search' %}?q=GST" class="btn btn-outline-light btn-lg w-100">
+                    <i class="fas fa-receipt d-block mb-2" style="font-size: 2rem;"></i>
+                    GST Forms
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{% url 'forms:search' %}?q=ROC" class="btn btn-outline-light btn-lg w-100">
+                    <i class="fas fa-building d-block mb-2" style="font-size: 2rem;"></i>
+                    ROC Forms
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{% url 'forms:search' %}?q=TDS" class="btn btn-outline-light btn-lg w-100">
+                    <i class="fas fa-calculator d-block mb-2" style="font-size: 2rem;"></i>
+                    TDS Forms
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

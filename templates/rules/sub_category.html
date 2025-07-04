@@ -1,0 +1,390 @@
+{% extends 'rules/base.html' %}
+
+{% block title %}{{ subcategory.name }} - {{ category.name }} - Rules Repository{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Breadcrumb Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-light p-3 rounded">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:home' %}"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:category_detail' category.slug %}">{{ category.name }}</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ subcategory.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- SubCategory Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient text-white p-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-sitemap fa-3x me-4"></i>
+                            <div>
+                                <h1 class="h2 mb-2 fw-bold">{{ subcategory.name }}</h1>
+                                <p class="mb-1 opacity-75">Under {{ category.name }}</p>
+                                {% if subcategory.description %}
+                                    <p class="mb-0 opacity-75">{{ subcategory.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-2"></i>Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_chapter' %}">
+                                        <i class="fas fa-book-open me-2"></i>Add Section
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_rule' %}">
+                                        <i class="fas fa-clipboard-list me-2"></i>Add Rule
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_rule_section' %}">
+                                        <i class="fas fa-list me-2"></i>Add Rule Section
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search within SubCategory -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" action="{% url 'rules:search' %}">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" class="form-control" name="q" 
+                                   placeholder="Search within {{ subcategory.name }}..." 
+                                   value="{{ request.GET.q }}">
+                            <button class="btn btn-success" type="submit">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Sections -->
+            {% if chapters %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-book-open me-2"></i>Sections ({{ chapters.count }})
+                    </h4>
+                    <a href="{% url 'rules:add_chapter' %}" class="btn btn-sm btn-info">
+                        <i class="fas fa-plus me-2"></i>Add Section
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for chapter in chapters %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card border h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold">
+                                        <a href="{% url 'rules:chapter_detail' category.slug subcategory.slug chapter.slug %}" class="text-decoration-none">
+                                            Section {{ chapter.chapter_number }}: {{ chapter.name }}
+                                        </a>
+                                    </h6>
+                                    {% if chapter.description %}
+                                        <p class="card-text small text-muted">{{ chapter.description|truncatewords:20 }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- Section Stats -->
+                                    <div class="row text-center small mt-3">
+                                        <div class="col-6">
+                                            <strong class="text-warning">{{ chapter.rules.count }}</strong>
+                                            <div class="text-muted">Rules</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong class="text-info">
+                                                {% for rule in chapter.rules.all %}{{ rule.rule_sections.count }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                                            </strong>
+                                            <div class="text-muted">Sub-sections</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Rules under this section -->
+                                    {% if chapter.rules.all %}
+                                        <div class="mt-3">
+                                            <small class="text-muted d-block mb-2">Rules in this section:</small>
+                                            {% for rule in chapter.rules.all|slice:":3" %}
+                                                <div class="small mb-1">
+                                                    <a href="{{ rule.get_absolute_url }}" class="text-decoration-none">
+                                                        {{ rule.name }}
+                                                        {% if rule.year %}({{ rule.year }}){% endif %}
+                                                    </a>
+                                                </div>
+                                            {% endfor %}
+                                            {% if chapter.rules.count > 3 %}
+                                                <small class="text-muted">... and {{ chapter.rules.count|add:"-3" }} more</small>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer bg-transparent border-0">
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'rules:chapter_detail' category.slug subcategory.slug chapter.slug %}" class="btn btn-outline-info btn-sm flex-fill">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                        <a href="{% url 'rules:add_rule' %}" class="btn btn-outline-success btn-sm flex-fill">
+                                            <i class="fas fa-plus me-1"></i>Add Rule
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-book-open fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">No Sections Found</h4>
+                    <p class="text-muted mb-4">
+                        There are no sections in the {{ subcategory.name }} subcategory yet.
+                        <br>Start by creating sections and then add rules under them.
+                    </p>
+                    <a href="{% url 'rules:add_chapter' %}" class="btn btn-info btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add First Section
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- All Rules in SubCategory -->
+            {% if chapters %}
+                {% for chapter in chapters %}
+                    {% for rule in chapter.rules.all %}
+                        {% if forloop.parentloop.first and forloop.first %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-clipboard-list me-2"></i>All Rules in {{ subcategory.name }}
+                                </h4>
+                                <a href="{% url 'rules:add_rule' %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-plus me-2"></i>Add Rule
+                                </a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush">
+                        {% endif %}
+                        
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">
+                                        <a href="{{ rule.get_absolute_url }}" class="text-decoration-none">
+                                            {{ rule.name }}
+                                            {% if rule.year %}
+                                                <span class="badge bg-light text-dark ms-2">{{ rule.year }}</span>
+                                            {% endif %}
+                                        </a>
+                                    </h6>
+                                    {% if rule.short_description %}
+                                        <p class="mb-2 text-muted">{{ rule.short_description|truncatewords:25 }}</p>
+                                    {% endif %}
+                                    <div class="small text-muted">
+                                        <i class="fas fa-book-open me-1"></i>{{ chapter.name }}
+                                        {% if rule.rule_number %}
+                                            <span class="ms-3">
+                                                <i class="fas fa-hashtag me-1"></i>{{ rule.rule_number }}
+                                            </span>
+                                        {% endif %}
+                                        <span class="ms-3">
+                                            <i class="fas fa-list me-1"></i>{{ rule.rule_sections.count }} sub-sections
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-end ms-3">
+                                    {% if rule.is_featured %}
+                                        <span class="badge bg-warning text-dark mb-2">
+                                            <i class="fas fa-star me-1"></i>Featured
+                                        </span><br>
+                                    {% endif %}
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ rule.get_absolute_url }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'rules:add_rule_section' %}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if forloop.parentloop.last and forloop.last %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- SubCategory Stats -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>SubCategory Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-info mb-1">{{ chapters.count }}</div>
+                            <small class="text-muted">Sections</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-warning mb-1">
+                                {% for chapter in chapters %}{{ chapter.rules.count }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                            </div>
+                            <small class="text-muted">Rules</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-success mb-1">
+                                {% for chapter in chapters %}
+                                    {% for rule in chapter.rules.all %}{{ rule.rule_sections.count }}{% if not forloop.last or not forloop.parentloop.last %} + {% endif %}{% endfor %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">Sub-sections</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-danger mb-1">
+                                {% for chapter in chapters %}
+                                    {% for rule in chapter.rules.all %}{{ rule.procedures.count }}{% if not forloop.last or not forloop.parentloop.last %} + {% endif %}{% endfor %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">Procedures</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hierarchy Path -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sitemap me-2"></i>Hierarchy Path
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="hierarchy-path">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-folder text-primary me-2"></i>
+                            <a href="{% url 'rules:category_detail' category.slug %}">{{ category.name }}</a>
+                        </div>
+                        <div class="ms-3 d-flex align-items-center">
+                            <i class="fas fa-sitemap text-success me-2"></i>
+                            <strong>{{ subcategory.name }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Sections -->
+            {% if chapters %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Recently Added Sections
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for chapter in chapters|slice:":5" %}
+                    <div class="mb-2">
+                        <a href="{% url 'rules:chapter_detail' category.slug subcategory.slug chapter.slug %}" class="text-decoration-none d-block">
+                            <strong>Section {{ chapter.chapter_number }}: {{ chapter.name }}</strong>
+                        </a>
+                        <small class="text-muted">{{ chapter.rules.count }} rules • Added: {{ chapter.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    {% if not forloop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'rules:add_chapter' %}" class="btn btn-info">
+                            <i class="fas fa-book-open me-2"></i>Add Section
+                        </a>
+                        <a href="{% url 'rules:add_rule' %}" class="btn btn-success">
+                            <i class="fas fa-clipboard-list me-2"></i>Add Rule
+                        </a>
+                        <a href="{% url 'rules:add_rule_section' %}" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i>Add Rule Section
+                        </a>
+                        <hr>
+                        <a href="{% url 'rules:category_detail' category.slug %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to {{ category.name }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.hierarchy-path {
+    line-height: 1.8;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

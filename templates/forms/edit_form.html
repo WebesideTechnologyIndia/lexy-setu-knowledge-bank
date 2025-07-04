@@ -1,0 +1,634 @@
+{% extends 'forms/base.html' %}
+{% load form_filters %}
+
+{% block title %}Edit Form - {{ form.form_number }} - Tax Forms Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-header {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        padding: 40px 0;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .file-upload-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .current-file {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+        border: 1px solid #e9ecef;
+        border-left: 4px solid #28a745;
+    }
+    
+    .file-preview {
+        background: #e9ecef;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    
+    .danger-zone {
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'forms:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'forms:manage_forms' %}">Manage Forms</a></li>
+            <li class="breadcrumb-item active">Edit {{ form.form_number }}</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Edit Header -->
+<section class="edit-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="fas fa-edit me-3"></i>Edit Form
+                </h1>
+                <p class="lead mb-0">Update form details and manage files</p>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="bg-white bg-opacity-20 rounded-3 p-3">
+                    <h3 class="display-6 fw-bold">{{ form.form_number }}</h3>
+                    <p class="mb-0">{{ form.category.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container my-5">
+    <!-- Success Message -->
+    <div class="alert alert-success alert-dismissible fade show d-none" id="successAlert" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span id="successText">Form updated successfully!</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <!-- Edit Form -->
+    <div class="form-card">
+        <form id="editForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="form_id" value="{{ form.pk }}">
+            
+            <!-- Basic Information -->
+            <h4 class="mb-4">
+                <i class="fas fa-info-circle text-primary me-2"></i>Basic Information
+            </h4>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="form_number" class="form-label fw-bold">Form Number *</label>
+                    <input type="text" class="form-control form-control-lg" id="form_number" 
+                           name="form_number" value="{{ form.form_number }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="assessment_year" class="form-label fw-bold">Assessment Year</label>
+                    <input type="text" class="form-control form-control-lg" id="assessment_year" 
+                           name="assessment_year" value="{{ form.assessment_year|default:'' }}">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="title" class="form-label fw-bold">Form Title *</label>
+                <input type="text" class="form-control form-control-lg" id="title" 
+                       name="title" value="{{ form.title }}" required>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="category" class="form-label fw-bold">Category *</label>
+                    <select class="form-select form-select-lg" id="category" name="category" required>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id == form.category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="financial_year" class="form-label fw-bold">Financial Year</label>
+                    <input type="text" class="form-control form-control-lg" id="financial_year" 
+                           name="financial_year" value="{{ form.financial_year|default:'' }}">
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-4">
+                <label for="description" class="form-label fw-bold">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4">{{ form.description|default:'' }}</textarea>
+            </div>
+            
+            <!-- File Management -->
+            <h4 class="mb-4 mt-5">
+                <i class="fas fa-file text-primary me-2"></i>File Management
+            </h4>
+            
+            <!-- Current Files Display -->
+            <div class="row mb-4">
+                <!-- PDF File -->
+                <div class="col-md-4">
+                    <h6 class="text-danger fw-bold">
+                        <i class="fas fa-file-pdf me-1"></i>PDF Version
+                    </h6>
+                    {% if form.pdf_file %}
+                    <div class="current-file">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-success fw-bold">Current File:</small>
+                                <p class="mb-1">{{ form.pdf_file.name|basename }}</p>
+                                <small class="text-muted">{{ form.pdf_size|filesizeformat|default:"Unknown" }}</small>
+                            </div>
+                            <div>
+                                <a href="{{ form.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="removeCurrentFile('pdf', {{ form.pk }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-file-pdf fa-2x mb-2"></i>
+                        <p>No PDF file uploaded</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Upload New PDF -->
+                    <div class="file-upload-section">
+                        <input type="file" class="form-control" name="new_pdf_file" accept=".pdf" id="newPdfFile">
+                        <small class="text-muted">Upload new PDF file (optional)</small>
+                    </div>
+                </div>
+                
+                <!-- Word File -->
+                <div class="col-md-4">
+                    <h6 class="text-primary fw-bold">
+                        <i class="fas fa-file-word me-1"></i>Word Version
+                    </h6>
+                    {% if form.word_file %}
+                    <div class="current-file">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-success fw-bold">Current File:</small>
+                                <p class="mb-1">{{ form.word_file.name|basename }}</p>
+                                <small class="text-muted">{{ form.word_size|filesizeformat|default:"Unknown" }}</small>
+                            </div>
+                            <div>
+                                <a href="{{ form.word_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="removeCurrentFile('word', {{ form.pk }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-file-word fa-2x mb-2"></i>
+                        <p>No Word file uploaded</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Upload New Word -->
+                    <div class="file-upload-section">
+                        <input type="file" class="form-control" name="new_word_file" accept=".doc,.docx" id="newWordFile">
+                        <small class="text-muted">Upload new Word file (optional)</small>
+                    </div>
+                </div>
+                
+                <!-- Excel File -->
+                <div class="col-md-4">
+                    <h6 class="text-success fw-bold">
+                        <i class="fas fa-file-excel me-1"></i>Excel Version
+                    </h6>
+                    {% if form.excel_file %}
+                    <div class="current-file">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-success fw-bold">Current File:</small>
+                                <p class="mb-1">{{ form.excel_file.name|basename }}</p>
+                                <small class="text-muted">{{ form.excel_size|filesizeformat|default:"Unknown" }}</small>
+                            </div>
+                            <div>
+                                <a href="{{ form.excel_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="removeCurrentFile('excel', {{ form.pk }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-file-excel fa-2x mb-2"></i>
+                        <p>No Excel file uploaded</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Upload New Excel -->
+                    <div class="file-upload-section">
+                        <input type="file" class="form-control" name="new_excel_file" accept=".xls,.xlsx" id="newExcelFile">
+                        <small class="text-muted">Upload new Excel file (optional)</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- External URL -->
+            <div class="mb-4">
+                <label for="external_url" class="form-label fw-bold">External URL</label>
+                <input type="url" class="form-control form-control-lg" id="external_url" 
+                       name="external_url" value="{{ form.external_url|default:'' }}" 
+                       placeholder="https://example.com/form.pdf">
+                <div class="form-text">Alternative URL if files are hosted elsewhere</div>
+            </div>
+            
+            <!-- SEO & Meta -->
+            <h4 class="mb-4 mt-5">
+                <i class="fas fa-search text-primary me-2"></i>SEO & Meta Information
+            </h4>
+            
+            <div class="mb-4">
+                <label for="meta_title" class="form-label fw-bold">Meta Title</label>
+                <input type="text" class="form-control" id="meta_title" 
+                       name="meta_title" value="{{ form.meta_title|default:'' }}" 
+                       placeholder="Auto-generated if left empty">
+            </div>
+            
+            <div class="mb-4">
+                <label for="meta_description" class="form-label fw-bold">Meta Description</label>
+                <textarea class="form-control" id="meta_description" name="meta_description" rows="3" 
+                          placeholder="Auto-generated if left empty">{{ form.meta_description|default:'' }}</textarea>
+            </div>
+            
+            <!-- Settings -->
+            <h4 class="mb-4 mt-5">
+                <i class="fas fa-cog text-primary me-2"></i>Form Settings
+            </h4>
+            
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="is_active" 
+                               name="is_active" {% if form.is_active %}checked{% endif %}>
+                        <label class="form-check-label fw-bold" for="is_active">
+                            Active Form
+                        </label>
+                        <div class="form-text">Make form visible to users</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="is_featured" 
+                               name="is_featured" {% if form.is_featured %}checked{% endif %}>
+                        <label class="form-check-label fw-bold" for="is_featured">
+                            Featured Form
+                        </label>
+                        <div class="form-text">Show in featured section</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="order" class="form-label fw-bold">Display Order</label>
+                    <input type="number" class="form-control" id="order" 
+                           name="order" value="{{ form.order }}" min="0">
+                    <div class="form-text">Lower number = higher priority</div>
+                </div>
+            </div>
+            
+            <!-- Form Statistics (Read-only) -->
+            <h4 class="mb-4 mt-5">
+                <i class="fas fa-chart-bar text-primary me-2"></i>Statistics
+            </h4>
+            
+            <div class="row mb-4">
+                <div class="col-md-3 text-center">
+                    <div class="bg-light rounded p-3">
+                        <h5 class="text-primary">{{ form.download_count }}</h5>
+                        <small class="text-muted">Total Downloads</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="bg-light rounded p-3">
+                        <h5 class="text-danger">{{ form.pdf_download_count|default:0 }}</h5>
+                        <small class="text-muted">PDF Downloads</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="bg-light rounded p-3">
+                        <h5 class="text-primary">{{ form.word_download_count|default:0 }}</h5>
+                        <small class="text-muted">Word Downloads</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="bg-light rounded p-3">
+                        <h5 class="text-success">{{ form.excel_download_count|default:0 }}</h5>
+                        <small class="text-muted">Excel Downloads</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'forms:manage_forms' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Forms
+                    </a>
+                    <a href="{% url 'forms:form_detail' form.pk %}" class="btn btn-outline-info btn-lg" target="_blank">
+                        <i class="fas fa-eye me-2"></i>Preview Form
+                    </a>
+                </div>
+                
+                <div>
+                    <button type="button" class="btn btn-outline-warning btn-lg me-2" onclick="resetForm()">
+                        <i class="fas fa-undo me-2"></i>Reset Changes
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Update Form
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Danger Zone -->
+    <div class="danger-zone">
+        <h5 class="text-danger mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+        </h5>
+        <p class="text-muted mb-3">
+            Permanent actions that cannot be undone. Please be careful.
+        </p>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-warning" onclick="duplicateForm({{ form.pk }})">
+                <i class="fas fa-copy me-1"></i>Duplicate Form
+            </button>
+            <button class="btn btn-outline-danger" onclick="deleteForm({{ form.pk }}, '{{ form.form_number }}')">
+                <i class="fas fa-trash me-1"></i>Delete Form
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editForm');
+    
+    // Form submission
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateForm();
+    });
+    
+    // File input change handlers
+    ['newPdfFile', 'newWordFile', 'newExcelFile'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    showFilePreview(e.target, e.target.files[0]);
+                }
+            });
+        }
+    });
+});
+
+// Update form
+function updateForm() {
+    const formData = new FormData(document.getElementById('editForm'));
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+    submitBtn.disabled = true;
+    
+    fetch('{% url "forms:edit_form" form.pk %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Form updated successfully!');
+            // Optionally reload page to show updated data
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showError(data.error || 'Failed to update form');
+        }
+    })
+    .catch(error => {
+        showError('Network error occurred');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Remove current file
+function removeCurrentFile(fileType, formId) {
+    if (confirm(`Are you sure you want to remove the current ${fileType.toUpperCase()} file?`)) {
+        fetch('{% url "forms:remove_file" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                form_id: formId,
+                file_type: fileType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess(`${fileType.toUpperCase()} file removed successfully!`);
+                location.reload();
+            } else {
+                showError(data.error || 'Failed to remove file');
+            }
+        })
+        .catch(error => {
+            showError('Network error occurred');
+        });
+    }
+}
+
+// Show file preview
+function showFilePreview(input, file) {
+    const preview = document.createElement('div');
+    preview.className = 'file-preview mt-2';
+    preview.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-file me-2"></i>
+                <strong>New file selected:</strong> ${file.name}
+                <small class="d-block text-muted">Size: ${formatFileSize(file.size)}</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFileInput('${input.id}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Remove any existing preview
+    const existingPreview = input.parentNode.querySelector('.file-preview');
+    if (existingPreview) {
+        existingPreview.remove();
+    }
+    
+    input.parentNode.appendChild(preview);
+}
+
+// Clear file input
+function clearFileInput(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        input.value = '';
+        const preview = input.parentNode.querySelector('.file-preview');
+        if (preview) {
+            preview.remove();
+        }
+    }
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Show success message
+function showSuccess(message) {
+    const alert = document.getElementById('successAlert');
+    document.getElementById('successText').textContent = message;
+    alert.classList.remove('d-none');
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+        alert.classList.add('d-none');
+    }, 3000);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Show error message
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+// Reset form
+function resetForm() {
+    if (confirm('Are you sure you want to reset all changes?')) {
+        location.reload();
+    }
+}
+
+// Duplicate form
+function duplicateForm(formId) {
+    if (confirm('Create a duplicate of this form?')) {
+        fetch('{% url "forms:duplicate_form" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                form_id: formId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('Form duplicated successfully!');
+                setTimeout(() => {
+                    window.location.href = data.edit_url;
+                }, 1500);
+            } else {
+                showError(data.error || 'Failed to duplicate form');
+            }
+        })
+        .catch(error => {
+            showError('Network error occurred');
+        });
+    }
+}
+
+// Delete form
+function deleteForm(formId, formNumber) {
+    if (confirm(`Are you sure you want to delete form "${formNumber}"? This action cannot be undone.`)) {
+        fetch('{% url "forms:delete_form" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                form_id: formId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('Form deleted successfully!');
+                setTimeout(() => {
+                    window.location.href = '{% url "forms:manage_forms" %}';
+                }, 1500);
+            } else {
+                showError(data.error || 'Failed to delete form');
+            }
+        })
+        .catch(error => {
+            showError('Network error occurred');
+        });
+    }
+}
+</script>
+{% endblock %}

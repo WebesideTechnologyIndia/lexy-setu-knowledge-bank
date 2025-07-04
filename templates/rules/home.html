@@ -1,0 +1,399 @@
+{% extends 'rules/base.html' %}
+
+{% block title %}Home - Rules Repository{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="hero-section p-5 rounded-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 400px;">
+                <div class="position-absolute top-0 end-0 opacity-10">
+                    <i class="fas fa-clipboard-list" style="font-size: 15rem;"></i>
+                </div>
+                <div class="container position-relative">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h1 class="display-3 fw-bold mb-4">
+                                <i class="fas fa-clipboard-check me-3"></i>
+                                Rules Repository
+                            </h1>
+                            <p class="lead mb-4 fs-4">
+                                Your comprehensive database for rules, regulations, guidelines, and procedures. 
+                                Access thousands of regulatory documents with advanced search capabilities.
+                            </p>
+                            
+                            <!-- Search Bar -->
+                            <form method="get" action="{% url 'rules:search' %}" class="mb-4">
+                                <div class="input-group input-group-lg shadow-lg">
+                                    <span class="input-group-text bg-white border-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-0" name="q" 
+                                           placeholder="Search rules, regulations, sections, procedures..." 
+                                           value="{{ request.GET.q }}"
+                                           style="box-shadow: none;">
+                                    <button class="btn btn-warning btn-lg fw-bold px-4" type="submit">
+                                        Search
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- Quick Action Buttons -->
+                            <div class="d-flex gap-3 flex-wrap">
+                                <a href="{% url 'rules:add_content_home' %}" class="btn btn-light btn-lg">
+                                    <i class="fas fa-plus me-2"></i>Add Content
+                                </a>
+                                <a href="#categories" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-folder me-2"></i>Browse Categories
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats Row -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 text-center stats-card">
+                <div class="card-body p-4">
+                    <div class="display-4 text-primary mb-3">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3 class="text-primary mb-2">{{ categories|length|default:0 }}</h3>
+                    <p class="text-muted mb-0">Categories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 text-center stats-card">
+                <div class="card-body p-4">
+                    <div class="display-4 text-success mb-3">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h3 class="text-success mb-2">
+                        {% if categories %}
+                            {% for category in categories %}{{ category.subcategories.count }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">SubCategories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 text-center stats-card">
+                <div class="card-body p-4">
+                    <div class="display-4 text-info mb-3">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3 class="text-info mb-2">
+                        {% if categories %}
+                            {% for category in categories %}
+                                {% for subcategory in category.subcategories.all %}
+                                    {{ subcategory.chapters.count }}{% if not forloop.last or not forloop.parentloop.last %} + {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">Sections</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100 text-center stats-card">
+                <div class="card-body p-4">
+                    <div class="display-4 text-warning mb-3">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3 class="text-warning mb-2">
+                        {% if categories %}
+                            {% for category in categories %}
+                                {% for subcategory in category.subcategories.all %}
+                                    {% for chapter in subcategory.chapters.all %}
+                                        {{ chapter.rules.count }}{% if not forloop.last or not forloop.parentloop.last or not forloop.parentloop.parentloop.last %} + {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">Rules & Regulations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Categories Section -->
+    <div class="row mb-5" id="categories">
+        <div class="col-12 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="fw-bold">
+                    <i class="fas fa-folder-tree me-3 text-primary"></i>
+                    Browse by Category
+                </h2>
+                {% if categories %}
+                    <a href="{% url 'rules:add_category' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Add Category
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if categories %}
+            {% for category in categories %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100 category-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="category-icon me-3">
+                                <i class="{{ category.icon|default:'fas fa-folder' }} fa-2x text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title fw-bold mb-2">{{ category.name }}</h5>
+                                <p class="card-text text-muted small">
+                                    {{ category.description|truncatewords:12|default:"No description available" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Category Stats -->
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <small class="text-muted d-block">SubCategories</small>
+                                <strong class="text-primary">{{ category.subcategories.count }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Sections</small>
+                                <strong class="text-success">
+                                    {% for subcategory in category.subcategories.all %}{{ subcategory.chapters.count }}{% if not forloop.last %} + {% endif %}{% endfor %}
+                                </strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Rules</small>
+                                <strong class="text-warning">
+                                    {% for subcategory in category.subcategories.all %}
+                                        {% for chapter in subcategory.chapters.all %}
+                                            {{ chapter.rules.count }}{% if not forloop.last or not forloop.parentloop.last %} + {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                </strong>
+                            </div>
+                        </div>
+                        
+                        <a href="{% url 'rules:category_detail' category.slug %}" class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-right me-2"></i>Explore Category
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-folder-plus fa-5x text-muted"></i>
+                        </div>
+                        <h3 class="text-muted mb-3">No Categories Yet</h3>
+                        <p class="text-muted mb-4">
+                            Start building your rules repository by adding categories, subcategories, sections and rules.
+                        </p>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="{% url 'rules:add_category' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus me-2"></i>Add First Category
+                            </a>
+                            <a href="{% url 'rules:add_content_home' %}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-cogs me-2"></i>Content Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Featured Rules -->
+    {% if featured_rules %}
+    <div class="row mb-5">
+        <div class="col-12 mb-4">
+            <h2 class="fw-bold">
+                <i class="fas fa-star me-3 text-warning"></i>
+                Featured Rules
+            </h2>
+        </div>
+        {% for rule in featured_rules %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 featured-rule-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-star me-1"></i>Featured
+                        </span>
+                        {% if rule.year %}
+                            <span class="badge bg-light text-dark">{{ rule.year }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <h5 class="card-title fw-bold mb-3">{{ rule.name }}</h5>
+                    <p class="card-text text-muted mb-3">
+                        {{ rule.short_description|truncatewords:15|default:"No description available" }}
+                    </p>
+                    
+                    <div class="small text-muted mb-3">
+                        <i class="fas fa-sitemap me-1"></i>
+                        {{ rule.chapter.subcategory.category.name }} → 
+                        {{ rule.chapter.subcategory.name }} → 
+                        {{ rule.chapter.name }}
+                    </div>
+                    
+                    {% if rule.rule_number %}
+                        <div class="small text-muted mb-3">
+                            <i class="fas fa-hashtag me-1"></i>{{ rule.rule_number }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent border-0 p-4 pt-0">
+                    <a href="{{ rule.get_absolute_url }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-eye me-2"></i>View Rule Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Recent Notifications -->
+    {% if recent_notifications %}
+    <div class="row mb-5">
+        <div class="col-12 mb-4">
+            <h2 class="fw-bold">
+                <i class="fas fa-bell me-3 text-info"></i>
+                Recent Updates
+            </h2>
+        </div>
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    {% for notification in recent_notifications %}
+                    <div class="notification-item p-4 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-2">{{ notification.title }}</h6>
+                                <p class="text-muted mb-2">
+                                    {{ notification.summary|truncatewords:20|default:"No summary available" }}
+                                </p>
+                                <div class="small text-muted">
+                                    <i class="fas fa-clipboard-list me-1"></i>{{ notification.rule.name }}
+                                    {% if notification.notification_number %}
+                                        <span class="ms-3">
+                                            <i class="fas fa-hashtag me-1"></i>{{ notification.notification_number }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end ms-3">
+                                <div class="small text-muted mb-2">{{ notification.notification_date|date:"M d, Y" }}</div>
+                                <span class="badge bg-{{ notification.notification_type|default:'primary' }}">
+                                    {{ notification.get_notification_type_display|default:'Update' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Actions Footer -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div class="card-body p-4 text-center">
+                    <h4 class="fw-bold mb-3">Ready to contribute?</h4>
+                    <p class="text-muted mb-4">Help expand our rules repository by adding new content</p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{% url 'rules:add_category' %}" class="btn btn-primary">
+                            <i class="fas fa-folder-plus me-2"></i>Add Category
+                        </a>
+                        <a href="{% url 'rules:add_subcategory' %}" class="btn btn-success">
+                            <i class="fas fa-layer-group me-2"></i>Add SubCategory
+                        </a>
+                        <a href="{% url 'rules:add_chapter' %}" class="btn btn-info">
+                            <i class="fas fa-book me-2"></i>Add Section
+                        </a>
+                        <a href="{% url 'rules:add_rule' %}" class="btn btn-warning">
+                            <i class="fas fa-clipboard-list me-2"></i>Add Rule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.hero-section {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    transition: all 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    transition: all 0.3s ease;
+}
+
+.featured-rule-card:hover {
+    transform: translateY(-3px);
+    transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.category-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+}
+
+.input-group-lg .form-control {
+    padding: 1rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-section {
+        min-height: 300px;
+    }
+    
+    .stats-card, .category-card, .featured-rule-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}

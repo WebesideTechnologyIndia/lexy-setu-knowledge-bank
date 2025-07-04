@@ -1,0 +1,376 @@
+{% extends 'acts/base.html' %}
+
+{% block title %}Content Management Dashboard - Knowledge Bank{% endblock %}
+
+{% block extra_head %}
+<style>
+    .dashboard-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        transition: transform 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .action-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 30px rgba(0,0,0,0.15);
+    }
+    
+    .action-card h5 {
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .action-card p {
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .quick-stats {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .quick-stats h6 {
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .quick-stats .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .workflow-step {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 3px solid #28a745;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .workflow-step.active {
+        border-left-color: #667eea;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+    
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: #28a745;
+        color: white;
+        border-radius: 50%;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+    
+    .step-number.active {
+        background: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-3">
+                    <i class="fas fa-plus-circle me-3"></i>
+                    Content Management Dashboard
+                </h1>
+                <p class="mb-0 fs-5">
+                    Add and manage tax laws, acts, chapters, sections, and related documents
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <i class="fas fa-database" style="font-size: 6rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="quick-stats">
+                <h6>Total Categories</h6>
+                <div class="stat-number">{{ categories_count|default:0 }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="quick-stats">
+                <h6>Total SubCategories</h6>
+                <div class="stat-number">{{ subcategories_count|default:0 }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="quick-stats">
+                <h6>Total Chapters</h6>
+                <div class="stat-number">{{ chapters_count|default:0 }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="quick-stats">
+                <h6>Total Acts</h6>
+                <div class="stat-number">{{ acts_count|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Main Actions -->
+        <div class="col-lg-8">
+            <h3 class="mb-4">Quick Actions</h3>
+            
+            <!-- Primary Content Creation -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-folder me-2"></i>Add Category</h5>
+                        <p>Create a new main category (Direct Tax, Indirect Tax, etc.)</p>
+                        <a href="{% url 'acts:add_category' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Category
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-folder-open me-2"></i>Add Subcategory</h5>
+                        <p>Create subcategories under existing categories</p>
+                        <a href="{% url 'acts:add_subcategory' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Subcategory
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-book me-2"></i>Add Chapter</h5>
+                        <p>Add chapters under subcategories</p>
+                        <a href="{% url 'acts:add_chapter' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Chapter
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-file-alt me-2"></i>Add Act</h5>
+                        <p>Add new acts and laws (Income Tax Act, GST Act, etc.)</p>
+                        <a href="{% url 'acts:add_act' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Act
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-list me-2"></i>Add Section</h5>
+                        <p>Add sections to acts with full CKEditor support</p>
+                        <a href="{% url 'acts:add_section' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Section
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-gavel me-2"></i>Add Rule</h5>
+                        <p>Add rules related to acts and sections</p>
+                        <a href="{% url 'acts:add_rule' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Rule
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-file-pdf me-2"></i>Add Form</h5>
+                        <p>Upload and manage government forms</p>
+                        <a href="{% url 'acts:add_form' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Form
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <h5><i class="fas fa-bell me-2"></i>Add Notification</h5>
+                        <p>Add government notifications and circulars</p>
+                        <a href="{% url 'acts:add_notification' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Notification
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workflow Guide -->
+        <div class="col-lg-4">
+            <h3 class="mb-4">Recommended Workflow</h3>
+            
+            <div class="workflow-step {% if categories_count == 0 %}active{% endif %}">
+                <div class="d-flex align-items-center">
+                    <span class="step-number {% if categories_count == 0 %}active{% endif %}">1</span>
+                    <div>
+                        <h6 class="mb-1">Create Categories</h6>
+                        <small class="text-muted">Start with main categories like Direct Tax, Indirect Tax</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-step {% if categories_count > 0 and subcategories_count == 0 %}active{% endif %}">
+                <div class="d-flex align-items-center">
+                    <span class="step-number {% if categories_count > 0 and subcategories_count == 0 %}active{% endif %}">2</span>
+                    <div>
+                        <h6 class="mb-1">Add Subcategories</h6>
+                        <small class="text-muted">Create subcategories under main categories</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-step {% if subcategories_count > 0 and chapters_count == 0 %}active{% endif %}">
+                <div class="d-flex align-items-center">
+                    <span class="step-number {% if subcategories_count > 0 and chapters_count == 0 %}active{% endif %}">3</span>
+                    <div>
+                        <h6 class="mb-1">Add Chapters</h6>
+                        <small class="text-muted">Create chapters under subcategories</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-step {% if chapters_count > 0 and acts_count == 0 %}active{% endif %}">
+                <div class="d-flex align-items-center">
+                    <span class="step-number {% if chapters_count > 0 and acts_count == 0 %}active{% endif %}">4</span>
+                    <div>
+                        <h6 class="mb-1">Create Acts</h6>
+                        <small class="text-muted">Add main acts like Income Tax Act, GST Act</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-step {% if acts_count > 0 and sections_count == 0 %}active{% endif %}">
+                <div class="d-flex align-items-center">
+                    <span class="step-number {% if acts_count > 0 and sections_count == 0 %}active{% endif %}">5</span>
+                    <div>
+                        <h6 class="mb-1">Create Sections</h6>
+                        <small class="text-muted">Add detailed sections with full content</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-step {% if sections_count > 0 %}active{% endif %}">
+                <div class="d-flex align-items-center">
+                    <span class="step-number {% if sections_count > 0 %}active{% endif %}">6</span>
+                    <div>
+                        <h6 class="mb-1">Add Supporting Content</h6>
+                        <small class="text-muted">Upload forms, rules, and notifications</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Tips -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-lightbulb me-2"></i>Quick Tips
+                </h6>
+                <ul class="small mb-0">
+                    <li class="mb-2">Follow the hierarchy: Category → SubCategory → Chapter → Act</li>
+                    <li class="mb-2">Use CKEditor for rich text formatting</li>
+                    <li class="mb-2">Upload PDF and Excel files for forms</li>
+                    <li class="mb-2">Set proper order numbers for sequence</li>
+                    <li>Mark important content as featured</li>
+                </ul>
+            </div>
+            
+            <!-- Admin Panel Link -->
+            <div class="mt-4">
+                <a href="/admin/" target="_blank" class="btn btn-outline-primary btn-lg w-100">
+                    <i class="fas fa-cogs me-2"></i>
+                    Advanced Admin Panel
+                </a>
+                <small class="text-muted d-block mt-2">
+                    For bulk operations and advanced management
+                </small>
+            </div>
+            
+            <!-- Quick Navigation -->
+            <div class="mt-4">
+                <a href="{% url 'acts:home' %}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-home me-2"></i>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Add some interactive elements
+    $(document).ready(function() {
+        // Animate cards on hover
+        $('.action-card').hover(
+            function() {
+                $(this).find('.btn').addClass('btn-lg');
+            },
+            function() {
+                $(this).find('.btn').removeClass('btn-lg');
+            }
+        );
+        
+        // Highlight completed steps
+        {% if categories_count > 0 %}
+            $('.workflow-step:eq(0)').removeClass('active').find('.step-number')
+                .removeClass('active').css('background', '#28a745');
+        {% endif %}
+        
+        {% if subcategories_count > 0 %}
+            $('.workflow-step:eq(1)').removeClass('active').find('.step-number')
+                .removeClass('active').css('background', '#28a745');
+        {% endif %}
+        
+        {% if chapters_count > 0 %}
+            $('.workflow-step:eq(2)').removeClass('active').find('.step-number')
+                .removeClass('active').css('background', '#28a745');
+        {% endif %}
+        
+        {% if acts_count > 0 %}
+            $('.workflow-step:eq(3)').removeClass('active').find('.step-number')
+                .removeClass('active').css('background', '#28a745');
+        {% endif %}
+        
+        {% if sections_count > 0 %}
+            $('.workflow-step:eq(4)').removeClass('active').find('.step-number')
+                .removeClass('active').css('background', '#28a745');
+        {% endif %}
+    });
+</script>
+{% endblock %}

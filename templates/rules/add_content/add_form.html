@@ -1,0 +1,604 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Form - Knowledge Bank</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ACTS RULE 1: PAGE LAYOUT RULES */
+        .acts-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* ACTS RULE 2: SIDEBAR RULES */
+        .acts-sidebar {
+            width: 25%;
+            background: #0d6efd;
+            color: white;
+            padding: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .acts-sidebar h4 {
+            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            padding-bottom: 1rem;
+        }
+        
+        .acts-nav-link {
+            color: white !important;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .acts-nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        
+        /* ACTS RULE 3: MAIN CONTENT RULES */
+        .acts-main-content {
+            margin-left: 25%;
+            width: 75%;
+            padding: 2rem;
+        }
+        
+        /* ACTS RULE 4: BREADCRUMB RULES */
+        .acts-breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .acts-breadcrumb a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        
+        .acts-breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ACTS RULE 5: HEADER BANNER RULES */
+        .acts-header-banner {
+            background: linear-gradient(135deg, #198754, #20c997);
+            color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .acts-header-banner h2 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .acts-header-banner p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        /* ACTS RULE 6: FORM CARD RULES */
+        .acts-form-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        
+        /* ACTS RULE 7: FORM FIELD RULES */
+        .acts-form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .acts-form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #495057;
+            display: flex;
+            align-items: center;
+        }
+        
+        .acts-form-label i {
+            margin-right: 0.5rem;
+            color: #6c757d;
+        }
+        
+        .acts-required {
+            color: #dc3545;
+        }
+        
+        .acts-form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        
+        .acts-form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+            outline: none;
+        }
+        
+        .acts-form-control.is-invalid {
+            border-color: #dc3545;
+        }
+        
+        .acts-error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .acts-helper-text {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* ACTS RULE 8: CHECKBOX RULES */
+        .acts-checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 2rem;
+        }
+        
+        .acts-checkbox {
+            margin-right: 0.5rem;
+        }
+        
+        /* ACTS RULE 9: BUTTON RULES */
+        .acts-button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .acts-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .acts-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .acts-btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .acts-btn-success {
+            background: linear-gradient(135deg, #198754, #20c997);
+            color: white;
+        }
+        
+        .acts-btn-success:hover {
+            background: linear-gradient(135deg, #157347, #1aa179);
+            transform: translateY(-2px);
+        }
+        
+        .acts-btn i {
+            margin-right: 0.5rem;
+        }
+        
+        /* ACTS RULE 10: ALERT RULES */
+        .acts-alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .acts-alert-success {
+            background: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+        
+        .acts-alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c2c7;
+        }
+        
+        .acts-alert-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+        
+        /* ACTS RULE 11: RESPONSIVE RULES */
+        @media (max-width: 768px) {
+            .acts-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .acts-main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ACTS RULE 1: MAIN CONTAINER -->
+    <div class="acts-container">
+        
+        <!-- ACTS RULE 2: SIDEBAR SECTION -->
+        <div class="acts-sidebar">
+            <h4><i class="fas fa-balance-scale me-2"></i>Tax Laws</h4>
+            <nav>
+                <a href="#" class="acts-nav-link">
+                    <i class="fas fa-home me-2"></i>Home
+                </a>
+                <a href="#" class="acts-nav-link">
+                    <i class="fas fa-plus me-2"></i>Add Content
+                </a>
+            </nav>
+        </div>
+        
+        <!-- ACTS RULE 3: MAIN CONTENT SECTION -->
+        <div class="acts-main-content">
+            
+            <!-- ACTS RULE 4: BREADCRUMB NAVIGATION -->
+            <nav class="acts-breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item"><a href="#">Add Content</a></li>
+                    <li class="breadcrumb-item active">Add Form</li>
+                </ol>
+            </nav>
+            
+            <!-- ACTS RULE 5: HEADER BANNER -->
+            <div class="acts-header-banner">
+                <h2><i class="fas fa-file-pdf me-3"></i>Add New Form</h2>
+                <p>Upload and manage government forms</p>
+            </div>
+            
+            <!-- ACTS RULE 6: ALERT MESSAGES (Hidden by default) -->
+            <div id="acts-alert-container" style="display: none;">
+                <div class="acts-alert acts-alert-success">
+                    <span id="acts-alert-message"></span>
+                    <button class="acts-alert-close" onclick="hideAlert()">&times;</button>
+                </div>
+            </div>
+            
+            <!-- ACTS RULE 7: FORM SECTION -->
+            <div class="acts-form-card">
+                <form id="acts-tax-form" method="post" enctype="multipart/form-data">
+                    
+                    <!-- ACTS RULE 8: ROW 1 - ACT AND SECTION -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-file-alt"></i>Act <span class="acts-required">*</span>
+                                </label>
+                                <select class="form-control acts-form-control" name="act" required>
+                                    <option value="">Select Act</option>
+                                    <option value="income-tax">Income Tax Act</option>
+                                    <option value="gst">GST Act</option>
+                                    <option value="company">Company Act</option>
+                                </select>
+                                <div class="acts-error-message" id="act-error"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-list"></i>Section
+                                </label>
+                                <input type="text" class="form-control acts-form-control" name="section">
+                                <small class="acts-helper-text">Optional</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTS RULE 9: ROW 2 - FORM NUMBER AND NAME -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-hashtag"></i>Form Number <span class="acts-required">*</span>
+                                </label>
+                                <input type="text" class="form-control acts-form-control" name="form_number" required>
+                                <small class="acts-helper-text">e.g., 16, 26AS</small>
+                                <div class="acts-error-message" id="form_number-error"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-tag"></i>Form Name <span class="acts-required">*</span>
+                                </label>
+                                <input type="text" class="form-control acts-form-control" name="name" required>
+                                <div class="acts-error-message" id="name-error"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTS RULE 10: DESCRIPTION -->
+                    <div class="acts-form-group">
+                        <label class="acts-form-label">
+                            <i class="fas fa-align-left"></i>Description
+                        </label>
+                        <textarea class="form-control acts-form-control" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <!-- ACTS RULE 11: PURPOSE -->
+                    <div class="acts-form-group">
+                        <label class="acts-form-label">
+                            <i class="fas fa-bullseye"></i>Purpose
+                        </label>
+                        <textarea class="form-control acts-form-control" name="purpose" rows="3"></textarea>
+                    </div>
+                    
+                    <!-- ACTS RULE 12: ROW 3 - PDF FILE AND EXTERNAL URL -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-file-pdf"></i>PDF File
+                                </label>
+                                <input type="file" class="form-control acts-form-control" name="pdf_file" accept=".pdf">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-link"></i>External URL
+                                </label>
+                                <input type="url" class="form-control acts-form-control" name="external_url">
+                                <small class="acts-helper-text">Alternative to PDF file upload</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTS RULE 13: INSTRUCTIONS -->
+                    <div class="acts-form-group">
+                        <label class="acts-form-label">
+                            <i class="fas fa-info-circle"></i>Instructions
+                        </label>
+                        <textarea class="form-control acts-form-control" name="instructions" rows="4"></textarea>
+                        <small class="acts-helper-text">How to fill out this form</small>
+                    </div>
+                    
+                    <!-- ACTS RULE 14: REQUIREMENTS -->
+                    <div class="acts-form-group">
+                        <label class="acts-form-label">
+                            <i class="fas fa-exclamation-triangle"></i>Requirements
+                        </label>
+                        <textarea class="form-control acts-form-control" name="requirements" rows="4"></textarea>
+                        <small class="acts-helper-text">Documents/information needed</small>
+                    </div>
+                    
+                    <!-- ACTS RULE 15: ROW 4 - DATE FIELDS -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-calendar"></i>Due Date
+                                </label>
+                                <input type="date" class="form-control acts-form-control" name="due_date">
+                                <small class="acts-helper-text">When this form is typically due</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-calendar-plus"></i>Valid From
+                                </label>
+                                <input type="date" class="form-control acts-form-control" name="valid_from">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-calendar-minus"></i>Valid Until
+                                </label>
+                                <input type="date" class="form-control acts-form-control" name="valid_until">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTS RULE 16: ROW 5 - ORDER AND CHECKBOXES -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="acts-form-group">
+                                <label class="acts-form-label">
+                                    <i class="fas fa-sort-numeric-up"></i>Order
+                                </label>
+                                <input type="number" class="form-control acts-form-control" name="order" value="1" min="1">
+                                <small class="acts-helper-text">Display order</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="acts-checkbox-group">
+                                <input type="checkbox" class="acts-checkbox" name="is_mandatory" id="is_mandatory">
+                                <label for="is_mandatory">Mandatory Form</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="acts-checkbox-group">
+                                <input type="checkbox" class="acts-checkbox" name="is_active" id="is_active" checked>
+                                <label for="is_active">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTS RULE 17: KEYWORDS -->
+                    <div class="acts-form-group">
+                        <label class="acts-form-label">
+                            <i class="fas fa-tags"></i>Keywords
+                        </label>
+                        <input type="text" class="form-control acts-form-control" name="keywords">
+                        <small class="acts-helper-text">Comma-separated keywords for search</small>
+                    </div>
+                    
+                    <!-- ACTS RULE 18: BUTTON GROUP -->
+                    <div class="acts-button-group">
+                        <a href="#" class="acts-btn acts-btn-secondary">
+                            <i class="fas fa-arrow-left"></i>Back
+                        </a>
+                        <button type="submit" class="acts-btn acts-btn-success">
+                            <i class="fas fa-save"></i>Create Form
+                        </button>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // ACTS RULE 19: JAVASCRIPT VALIDATION RULES
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // ACTS RULE 20: AUTO-HIDE ALERTS
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.acts-alert');
+                alerts.forEach(function(alert) {
+                    if (alert.parentNode) {
+                        alert.style.display = 'none';
+                    }
+                });
+            }, 5000);
+            
+            // ACTS RULE 21: FORM VALIDATION
+            document.getElementById('acts-tax-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const requiredFields = ['act', 'form_number', 'name'];
+                let hasErrors = false;
+                
+                // Clear previous errors
+                document.querySelectorAll('.acts-error-message').forEach(function(error) {
+                    error.textContent = '';
+                });
+                document.querySelectorAll('.acts-form-control').forEach(function(field) {
+                    field.classList.remove('is-invalid');
+                });
+                
+                // Validate required fields
+                requiredFields.forEach(function(fieldName) {
+                    const field = document.querySelector(`[name="${fieldName}"]`);
+                    const errorDiv = document.getElementById(`${fieldName}-error`);
+                    
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        if (errorDiv) {
+                            errorDiv.textContent = 'This field is required';
+                        }
+                        hasErrors = true;
+                    }
+                });
+                
+                // ACTS RULE 22: FORM NUMBER VALIDATION
+                const formNumber = document.querySelector('[name="form_number"]').value;
+                if (formNumber && !/^[a-zA-Z0-9]+$/.test(formNumber)) {
+                    document.querySelector('[name="form_number"]').classList.add('is-invalid');
+                    document.getElementById('form_number-error').textContent = 'Form number should contain only letters and numbers';
+                    hasErrors = true;
+                }
+                
+                // ACTS RULE 23: URL VALIDATION
+                const externalUrl = document.querySelector('[name="external_url"]').value;
+                if (externalUrl && !isValidUrl(externalUrl)) {
+                    document.querySelector('[name="external_url"]').classList.add('is-invalid');
+                    hasErrors = true;
+                }
+                
+                // ACTS RULE 24: DATE VALIDATION
+                const validFrom = document.querySelector('[name="valid_from"]').value;
+                const validUntil = document.querySelector('[name="valid_until"]').value;
+                
+                if (validFrom && validUntil && new Date(validFrom) > new Date(validUntil)) {
+                    document.querySelector('[name="valid_until"]').classList.add('is-invalid');
+                    hasErrors = true;
+                }
+                
+                if (!hasErrors) {
+                    showAlert('Form submitted successfully!', 'success');
+                    // Here you would normally submit the form data
+                    console.log('Form would be submitted');
+                } else {
+                    showAlert('Please fix the errors and try again.', 'error');
+                }
+            });
+        });
+        
+        // ACTS RULE 25: HELPER FUNCTIONS
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('acts-alert-container');
+            const alertDiv = alertContainer.querySelector('.acts-alert');
+            const messageSpan = document.getElementById('acts-alert-message');
+            
+            alertDiv.className = `acts-alert acts-alert-${type}`;
+            messageSpan.textContent = message;
+            alertContainer.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(function() {
+                alertContainer.style.display = 'none';
+            }, 5000);
+        }
+        
+        function hideAlert() {
+            document.getElementById('acts-alert-container').style.display = 'none';
+        }
+        
+        // ACTS RULE 26: REAL-TIME VALIDATION
+        document.querySelectorAll('.acts-form-control').forEach(function(field) {
+            field.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const fieldName = this.name;
+                    const errorDiv = document.getElementById(`${fieldName}-error`);
+                    if (errorDiv) {
+                        errorDiv.textContent = '';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+```

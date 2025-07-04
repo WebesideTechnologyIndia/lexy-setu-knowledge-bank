@@ -1,0 +1,160 @@
+<!-- notification_list.html -->
+{% extends 'notifications/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Notifications</h2>
+    
+    <!-- Filter Form -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form method="GET" class="d-flex">
+                <!-- Category Dropdown with Groups -->
+                <select name="category" class="form-control me-2">
+                    <option value="">All Categories</option>
+                    
+                    <optgroup label="RBI SEBI">
+                        <option value="rbi_sebi" {% if selected_category == 'rbi_sebi' %}selected{% endif %}>RBI SEBI</option>
+                        <option value="notification" {% if selected_category == 'notification' %}selected{% endif %}>Notification</option>
+                        <option value="circular" {% if selected_category == 'circular' %}selected{% endif %}>Circular</option>
+                    </optgroup>
+                    
+                    <optgroup label="Tax">
+                        <option value="income_tax" {% if selected_category == 'income_tax' %}selected{% endif %}>Income Tax</option>
+                        <option value="service_tax" {% if selected_category == 'service_tax' %}selected{% endif %}>Service Tax</option>
+                        <option value="central_sales_tax" {% if selected_category == 'central_sales_tax' %}selected{% endif %}>Central Sales Tax</option>
+                        <option value="excise_matters" {% if selected_category == 'excise_matters' %}selected{% endif %}>Excise Matters</option>
+                        <option value="customs" {% if selected_category == 'customs' %}selected{% endif %}>Customs</option>
+                    </optgroup>
+                    
+                    <optgroup label="VAT">
+                        <option value="vat" {% if selected_category == 'vat' %}selected{% endif %}>VAT (All States)</option>
+                        <option value="delhi_vat" {% if selected_category == 'delhi_vat' %}selected{% endif %}>Delhi VAT</option>
+                        <option value="maharashtra_vat" {% if selected_category == 'maharashtra_vat' %}selected{% endif %}>Maharashtra VAT</option>
+                        <option value="gujarat_vat" {% if selected_category == 'gujarat_vat' %}selected{% endif %}>Gujarat VAT</option>
+                        <option value="telangana_vat" {% if selected_category == 'telangana_vat' %}selected{% endif %}>Telangana VAT</option>
+                        <option value="tamil_nadu_vat" {% if selected_category == 'tamil_nadu_vat' %}selected{% endif %}>Tamil Nadu VAT</option>
+                        <option value="karnataka_vat" {% if selected_category == 'karnataka_vat' %}selected{% endif %}>Karnataka VAT</option>
+                        <option value="west_bengal_vat" {% if selected_category == 'west_bengal_vat' %}selected{% endif %}>West Bengal VAT</option>
+                        <option value="rajasthan_vat" {% if selected_category == 'rajasthan_vat' %}selected{% endif %}>Rajasthan VAT</option>
+                        <option value="uttar_pradesh_vat" {% if selected_category == 'uttar_pradesh_vat' %}selected{% endif %}>Uttar Pradesh VAT</option>
+                        <option value="punjab_vat" {% if selected_category == 'punjab_vat' %}selected{% endif %}>Punjab VAT</option>
+                    </optgroup>
+                    
+                    <optgroup label="GST">
+                        <option value="gst" {% if selected_category == 'gst' %}selected{% endif %}>GST (All)</option>
+                        <option value="igst" {% if selected_category == 'igst' %}selected{% endif %}>IGST</option>
+                        <option value="utgst" {% if selected_category == 'utgst' %}selected{% endif %}>UTGST</option>
+                        <option value="compensation_cess" {% if selected_category == 'compensation_cess' %}selected{% endif %}>Compensation Cess</option>
+                    </optgroup>
+                    
+                    <optgroup label="Law">
+                        <option value="company_law" {% if selected_category == 'company_law' %}selected{% endif %}>Company Law</option>
+                        <option value="labour_laws" {% if selected_category == 'labour_laws' %}selected{% endif %}>Labour Laws</option>
+                        <option value="fema" {% if selected_category == 'fema' %}selected{% endif %}>FEMA</option>
+                        <option value="llp_act_2008" {% if selected_category == 'llp_act_2008' %}selected{% endif %}>The LLP Act 2008</option>
+                        <option value="ibc_regulation" {% if selected_category == 'ibc_regulation' %}selected{% endif %}>IBC Regulation</option>
+                    </optgroup>
+                    
+                    <optgroup label="Others">
+                        <option value="accounting_standard" {% if selected_category == 'accounting_standard' %}selected{% endif %}>Accounting Standard (INDAS)</option>
+                        <option value="others" {% if selected_category == 'others' %}selected{% endif %}>Others</option>
+                    </optgroup>
+                </select>
+                
+                <!-- Search Input -->
+                <input type="text" name="search" class="form-control me-2" 
+                       placeholder="Search notifications..." 
+                       value="{{ search_query|default:'' }}">
+                
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'notification_list' %}" class="btn btn-secondary ms-2">Clear</a>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'add_notification' %}" class="btn btn-success">Add New Notification</a>
+        </div>
+    </div>
+    
+    <!-- Results Info -->
+    {% if selected_category or search_query %}
+        <div class="alert alert-info">
+            {% if notifications.object_list %}
+                Found {{ notifications.paginator.count }} notification(s)
+            {% else %}
+                No notifications found
+            {% endif %}
+            {% if selected_category %} in category "{{ selected_category|title }}"{% endif %}
+            {% if search_query %} matching "{{ search_query }}"{% endif %}
+        </div>
+    {% endif %}
+    
+    <!-- Notifications List -->
+    {% if notifications.object_list %}
+        <div class="row">
+            {% for notification in notifications %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ notification.title }}</h5>
+                            <p class="card-text">
+                                <span class="badge bg-primary">{{ notification.category.display_name }}</span>
+                            </p>
+                            <p class="card-text">
+                                {{ notification.content|truncatewords:20|striptags }}
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ notification.created_at|date:"M d, Y" }}</small>
+                            <div>
+                                <a href="{% url 'notification_detail' notification.pk %}" class="btn btn-sm btn-primary">View</a>
+                                <a href="{% url 'edit_notification' notification.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if notifications.has_other_pages %}
+            <nav aria-label="Pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if notifications.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ notifications.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in notifications.paginator.page_range %}
+                        {% if page_num == notifications.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ page_num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if notifications.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ notifications.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-warning text-center">
+            <h4>No notifications found</h4>
+            {% if selected_category or search_query %}
+                <p>Try adjusting your search criteria or <a href="{% url 'notification_list' %}">view all notifications</a>.</p>
+            {% else %}
+                <p>No notifications have been added yet. <a href="{% url 'add_notification' %}">Add the first one!</a></p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

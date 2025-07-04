@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Knowledge Bank{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .category-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #2c3e50 !important;
+        }
+        .link-item {
+            padding: 8px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        .link-item:hover {
+            background-color: #f8f9fa;
+        }
+        .link-item:last-child {
+            border-bottom: none;
+        }
+        .breadcrumb {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+        }
+        .search-box {
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'links:home' %}">
+                <i class="fas fa-book"></i> Knowledge Bank
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'links:home' %}">Home</a>
+                    </li>
+                </ul>
+                
+                <!-- Search Form -->
+                <form class="d-flex search-box" method="GET" action="{% url 'links:search' %}">
+                    <input class="form-control me-2" type="search" name="q" placeholder="Search links..." 
+                           value="{{ request.GET.q }}" aria-label="Search">
+                    <button class="btn btn-outline-light" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    {% block breadcrumb %}{% endblock %}
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5>Knowledge Bank</h5>
+                    <p class="mb-0">Quick access to important government and official links.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <p class="mb-0">&copy; 2025 Knowledge Bank. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

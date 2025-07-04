@@ -1,0 +1,166 @@
+{% extends 'acts/base.html' %}
+
+{% block title %}Home - Knowledge Bank{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="jumbotron bg-gradient p-5 rounded-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="container">
+                    <h1 class="display-4 mb-4">
+                        <i class="fas fa-balance-scale me-3"></i>
+                        Knowledge Bank
+                    </h1>
+                    <p class="lead mb-4">
+                        Comprehensive database of tax laws, acts, rules, and regulations
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form method="get" action="{% url 'acts:search' %}" class="mb-3">
+                                <div class="input-group input-group-lg">
+                                    <input type="text" class="form-control" name="q" placeholder="Search laws, acts, sections..." value="{{ request.GET.q }}">
+                                    <button class="btn btn-light" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Featured Categories -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Browse by Category</h2>
+        </div>
+        {% if categories %}
+            {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="{{ category.icon|default:'fas fa-folder' }} fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">{{ category.name }}</h5>
+                        <p class="card-text">{{ category.description|truncatewords:15 }}</p>
+                        <a href="{% url 'acts:category_detail' category.slug %}" class="btn btn-primary">
+                            View {{ category.acts.count }} Acts
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h4>No Categories Yet</h4>
+                    <p>Start by adding some categories and acts to your knowledge bank.</p>
+                    <a href="{% url 'acts:add_content_home' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Content
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Featured Acts -->
+    {% if featured_acts %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Featured Acts</h2>
+        </div>
+        {% for act in featured_acts %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ act.name }}</h5>
+                    <p class="card-text">{{ act.short_description|truncatewords:20 }}</p>
+                    <div class="small text-muted mb-3">
+                        <i class="fas fa-tag me-1"></i>{{ act.category.name }}
+                        {% if act.year %}
+                            <span class="ms-2">
+                                <i class="fas fa-calendar me-1"></i>{{ act.year }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'acts:act_detail' act.category.slug act.slug %}" class="btn btn-outline-primary">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Recent Notifications -->
+    {% if recent_notifications %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Recent Notifications</h2>
+        </div>
+        <div class="col-12">
+            <div class="list-group">
+                {% for notification in recent_notifications %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ notification.title }}</h6>
+                        <small>{{ notification.notification_date }}</small>
+                    </div>
+                    <p class="mb-1">{{ notification.summary|truncatewords:25 }}</p>
+                    <small class="text-muted">{{ notification.act.name }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Stats -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Quick Stats</h2>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-primary">{{ categories|length }}</h2>
+                    <p class="card-text">Categories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-success">{{ featured_acts|length }}</h2>
+                    <p class="card-text">Featured Acts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-info">{{ recent_notifications|length }}</h2>
+                    <p class="card-text">Recent Updates</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <a href="{% url 'acts:add_content_home' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add Content
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

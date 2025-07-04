@@ -1,0 +1,559 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}Manage Categories - Tax Forms Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        padding: 40px 0;
+    }
+    
+    .category-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+    
+    .category-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .category-actions {
+        padding: 15px 20px;
+    }
+    
+    .add-category-form {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #6c757d;
+    }
+    
+    .drag-handle:hover {
+        color: #495057;
+    }
+    
+    .category-stats {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-top: 10px;
+    }
+    
+    .sortable-list {
+        min-height: 100px;
+    }
+    
+    .success-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<section class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="fas fa-folder-open me-3"></i>Manage Categories
+                </h1>
+                <p class="lead mb-0">Add, edit, and organize form categories for your portal</p>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="stats-box bg-white bg-opacity-20 rounded-3 p-3">
+                    <h3 class="display-6 fw-bold">{{ categories.count }}</h3>
+                    <p class="mb-0">Total Categories</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container my-5">
+    <!-- Success Message -->
+    <div class="alert alert-success alert-dismissible fade show success-message" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span id="successText">Category updated successfully!</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <!-- Add New Category Form -->
+    <div class="add-category-form">
+        <h3 class="mb-4">
+            <i class="fas fa-plus-circle text-success me-2"></i>Add New Category
+        </h3>
+        
+        <form id="addCategoryForm">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label fw-bold">Category Name *</label>
+                        <input type="text" class="form-control form-control-lg" id="categoryName" 
+                               name="name" placeholder="e.g., Income Tax Forms" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="categorySlug" class="form-label fw-bold">URL Slug *</label>
+                        <input type="text" class="form-control form-control-lg" id="categorySlug" 
+                               name="slug" placeholder="e.g., income-tax-forms" required>
+                        <div class="form-text">Auto-generated from name, or customize</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="categoryDescription" class="form-label fw-bold">Description</label>
+                <textarea class="form-control" id="categoryDescription" name="description" rows="3" 
+                          placeholder="Brief description of this category..."></textarea>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="categoryOrder" class="form-label fw-bold">Display Order</label>
+                        <input type="number" class="form-control" id="categoryOrder" 
+                               name="order" value="{{ categories.count|add:1 }}" min="1">
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="categoryActive" 
+                               name="is_active" checked>
+                        <label class="form-check-label fw-bold" for="categoryActive">
+                            Active Category
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5">
+                    <i class="fas fa-plus me-2"></i>Add Category
+                </button>
+                <button type="reset" class="btn btn-outline-secondary btn-lg px-5 ms-3">
+                    <i class="fas fa-times me-2"></i>Clear
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Existing Categories -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>
+                    <i class="fas fa-list me-2"></i>Existing Categories
+                    <span class="badge bg-primary">{{ categories.count }}</span>
+                </h3>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="enableSorting()">
+                        <i class="fas fa-sort me-1"></i>Reorder Categories
+                    </button>
+                    <button class="btn btn-success d-none" id="saveSortBtn" onclick="saveSorting()">
+                        <i class="fas fa-save me-1"></i>Save Order
+                    </button>
+                </div>
+            </div>
+            
+            {% if categories %}
+            <div class="sortable-list" id="categoriesList">
+                {% for category in categories %}
+                <div class="category-card" data-id="{{ category.id }}">
+                    <div class="category-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <span class="drag-handle me-3 d-none">
+                                    <i class="fas fa-grip-vertical fa-lg"></i>
+                                </span>
+                                <div>
+                                    <h5 class="mb-1">
+                                        <span class="badge bg-secondary me-2">#{{ category.order }}</span>
+                                        {{ category.name }}
+                                        {% if not category.is_active %}
+                                        <span class="badge bg-warning">Inactive</span>
+                                        {% endif %}
+                                    </h5>
+                                    <small class="text-muted">
+                                        <i class="fas fa-link me-1"></i>Slug: {{ category.slug }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editCategory({{ category.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory({{ category.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {% if category.description %}
+                        <p class="text-muted mb-0 mt-2">{{ category.description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="category-actions">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="category-stats">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <strong>{{ category.forms.count }}</strong>
+                                            <small class="d-block text-muted">Forms</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>{{ category.forms.filter.is_active.True.count|default:0 }}</strong>
+                                            <small class="d-block text-muted">Active</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>{{ category.created_at|date:"M d" }}</strong>
+                                            <small class="d-block text-muted">Created</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'forms:category_forms' category.slug %}" 
+                                       class="btn btn-outline-info btn-sm" target="_blank">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    <a href="{% url 'forms:manage_forms' %}?category={{ category.id }}" 
+                                       class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-file-alt me-1"></i>Manage Forms
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% else %}
+            <!-- No Categories -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-folder-open fa-4x text-muted"></i>
+                </div>
+                <h4 class="text-muted">No Categories Found</h4>
+                <p class="text-muted mb-4">Start by adding your first category above.</p>
+                
+                <!-- Quick Add Popular Categories -->
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <div class="card-header">
+                        <h6 class="mb-0">Quick Add Popular Categories</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="quickAddCategory('Income Tax Forms', 'income-tax-forms', 'All Income Tax related forms including ITR forms')">
+                                <i class="fas fa-calculator me-2"></i>Income Tax Forms
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAddCategory('GST Forms', 'gst-forms', 'Goods and Services Tax forms and returns')">
+                                <i class="fas fa-receipt me-2"></i>GST Forms
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAddCategory('ROC Forms', 'roc-forms', 'Registrar of Companies forms')">
+                                <i class="fas fa-building me-2"></i>ROC Forms
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAddCategory('Company Forms', 'company-forms', 'Company registration and compliance forms')">
+                                <i class="fas fa-briefcase me-2"></i>Company Forms
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Category
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCategoryForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" id="editCategoryId" name="category_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editCategoryName" class="form-label fw-bold">Category Name *</label>
+                                <input type="text" class="form-control" id="editCategoryName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editCategorySlug" class="form-label fw-bold">URL Slug *</label>
+                                <input type="text" class="form-control" id="editCategorySlug" name="slug" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editCategoryDescription" class="form-label fw-bold">Description</label>
+                        <textarea class="form-control" id="editCategoryDescription" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editCategoryOrder" class="form-label fw-bold">Display Order</label>
+                                <input type="number" class="form-control" id="editCategoryOrder" name="order" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="editCategoryActive" name="is_active">
+                                <label class="form-check-label fw-bold" for="editCategoryActive">
+                                    Active Category
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+let sortable;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate slug from name
+    document.getElementById('categoryName').addEventListener('input', function() {
+        const name = this.value;
+        const slug = name.toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .trim('-');
+        document.getElementById('categorySlug').value = slug;
+    });
+    
+    // Add category form submission
+    document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addCategory();
+    });
+    
+    // Edit category form submission
+    document.getElementById('editCategoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateCategory();
+    });
+});
+
+// Add new category
+function addCategory() {
+    const formData = new FormData(document.getElementById('addCategoryForm'));
+    
+    fetch('{% url "forms:add_category" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Category added successfully!');
+            location.reload(); // Refresh page to show new category
+        } else {
+            alert('Error: ' + (data.error || 'Failed to add category'));
+        }
+    })
+    .catch(error => {
+        alert('Network error occurred');
+        console.error('Error:', error);
+    });
+}
+
+// Quick add category
+function quickAddCategory(name, slug, description) {
+    document.getElementById('categoryName').value = name;
+    document.getElementById('categorySlug').value = slug;
+    document.getElementById('categoryDescription').value = description;
+    
+    // Scroll to form
+    document.querySelector('.add-category-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Edit category
+function editCategory(categoryId) {
+    fetch(`{% url "forms:get_category" 0 %}`.replace('0', categoryId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const category = data.category;
+            document.getElementById('editCategoryId').value = category.id;
+            document.getElementById('editCategoryName').value = category.name;
+            document.getElementById('editCategorySlug').value = category.slug;
+            document.getElementById('editCategoryDescription').value = category.description || '';
+            document.getElementById('editCategoryOrder').value = category.order;
+            document.getElementById('editCategoryActive').checked = category.is_active;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            modal.show();
+        } else {
+            alert('Error loading category data');
+        }
+    })
+    .catch(error => {
+        alert('Network error occurred');
+    });
+}
+
+// Update category
+function updateCategory() {
+    const formData = new FormData(document.getElementById('editCategoryForm'));
+    
+    fetch('{% url "forms:update_category" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Category updated successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('editCategoryModal')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update category'));
+        }
+    })
+    .catch(error => {
+        alert('Network error occurred');
+    });
+}
+
+// Delete category
+function deleteCategory(categoryId) {
+    if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+        fetch('{% url "forms:delete_category" %}', {
+            method: 'POST',
+            body: JSON.stringify({category_id: categoryId}),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('Category deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete category'));
+            }
+        })
+        .catch(error => {
+            alert('Network error occurred');
+        });
+    }
+}
+
+// Enable sorting
+function enableSorting() {
+    const list = document.getElementById('categoriesList');
+    const dragHandles = document.querySelectorAll('.drag-handle');
+    const saveSortBtn = document.getElementById('saveSortBtn');
+    
+    // Show drag handles
+    dragHandles.forEach(handle => handle.classList.remove('d-none'));
+    saveSortBtn.classList.remove('d-none');
+    
+    // Initialize sortable
+    sortable = Sortable.create(list, {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost'
+    });
+}
+
+// Save sorting
+function saveSorting() {
+    const items = document.querySelectorAll('#categoriesList .category-card');
+    const order = Array.from(items).map(item => parseInt(item.dataset.id));
+    
+    fetch('{% url "forms:reorder_categories" %}', {
+        method: 'POST',
+        body: JSON.stringify({order: order}),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Category order updated successfully!');
+            location.reload();
+        } else {
+            alert('Error saving order');
+        }
+    })
+    .catch(error => {
+        alert('Network error occurred');
+    });
+}
+
+// Show success message
+function showSuccess(message) {
+    document.getElementById('successText').textContent = message;
+    document.querySelector('.success-message').style.display = 'block';
+    
+    setTimeout(() => {
+        document.querySelector('.success-message').style.display = 'none';
+    }, 3000);
+}
+</script>
+{% endblock %}

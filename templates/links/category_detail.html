@@ -1,0 +1,249 @@
+{% extends 'links/base.html' %}
+
+{% block title %}{{ category.name }} - Knowledge Bank{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'links:home' %}">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </li>
+            <li class="breadcrumb-item active">{{ category.name }}</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-0">
+                            <i class="fas fa-folder-open me-2"></i>
+                            {{ category.name }}
+                        </h2>
+                        {% if category.description %}
+                        <p class="mb-0 mt-2">{{ category.description }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addSubCategoryModal">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Sub Category
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Total Sub Categories: <strong>{{ category.subcategories.count }}</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Sub Categories Grid -->
+        <div class="row">
+            {% for subcategory in category.subcategories.all %}
+                {% if subcategory.is_active %}
+                <div class="col-lg-6 col-md-6 mb-4">
+                    <div class="card h-100 subcategory-card">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                {{ subcategory.name }}
+                            </h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="editSubCategory({{ subcategory.id }}, '{{ subcategory.name }}')">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="addLinkModal({{ subcategory.id }}, '{{ subcategory.name }}')">
+                                            <i class="fas fa-plus me-2"></i>Add Link
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            {% if subcategory.description %}
+                            <p class="text-muted small">{{ subcategory.description }}</p>
+                            {% endif %}
+                            
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-link me-1"></i>
+                                Links ({{ subcategory.links.count }})
+                            </h6>
+                            
+                            {% for link in subcategory.links.all|slice:":5" %}
+                                {% if link.is_active %}
+                                <div class="link-preview mb-2">
+                                    <a href="{% url 'links:link_redirect' link.id %}" 
+                                       target="_blank" 
+                                       class="text-decoration-none d-block">
+                                        <small class="text-dark">
+                                            <i class="fas fa-external-link-alt me-1 text-primary"></i>
+                                            {{ link.title }}
+                                        </small>
+                                    </a>
+                                </div>
+                                {% endif %}
+                            {% empty %}
+                            <p class="text-muted small">No links available</p>
+                            {% endfor %}
+                            
+                            {% if subcategory.links.count > 5 %}
+                            <small class="text-muted">+ {{ subcategory.links.count|add:"-5" }} more links...</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-footer bg-light">
+                            <a href="{% url 'links:subcategory_detail' category.slug subcategory.slug %}" 
+                               class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-eye me-1"></i>
+                                View All Links
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h4><i class="fas fa-info-circle me-2"></i>No Sub Categories</h4>
+                    <p class="mb-3">No sub categories found in this category.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubCategoryModal">
+                        <i class="fas fa-plus me-2"></i>Add First Sub Category
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Sub Category Modal -->
+<div class="modal fade" id="addSubCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add Sub Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addSubCategoryForm" method="post" action="{% url 'links:add_subcategory' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="category_id" value="{{ category.id }}">
+                    
+                    <div class="mb-3">
+                        <label for="subcategoryName" class="form-label">Sub Category Name</label>
+                        <input type="text" class="form-control" id="subcategoryName" name="name" required 
+                               placeholder="e.g., Income Tax">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subcategoryDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="subcategoryDescription" name="description" rows="3"
+                                  placeholder="Brief description of this sub category..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Add Sub Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Link Modal -->
+<div class="modal fade" id="addLinkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-link me-2"></i>Add Link to <span id="linkSubCategoryName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addLinkForm" method="post" action="{% url 'links:add_link' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="subcategory_id" id="linkSubCategoryId">
+                    
+                    <div class="mb-3">
+                        <label for="linkTitle" class="form-label">Link Title</label>
+                        <input type="text" class="form-control" id="linkTitle" name="title" required 
+                               placeholder="e.g., E-payment of Taxes">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="linkUrl" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="linkUrl" name="url" required 
+                               placeholder="https://example.com">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="linkDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="linkDescription" name="description" rows="2"
+                                  placeholder="Brief description of this link..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Add Link
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.subcategory-card {
+    transition: transform 0.2s ease;
+}
+.subcategory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.link-preview {
+    padding: 4px 8px;
+    border-left: 3px solid #007bff;
+    background-color: #f8f9fa;
+    border-radius: 0 4px 4px 0;
+}
+</style>
+
+<script>
+function addLinkModal(subcategoryId, subcategoryName) {
+    document.getElementById('linkSubCategoryId').value = subcategoryId;
+    document.getElementById('linkSubCategoryName').textContent = subcategoryName;
+    new bootstrap.Modal(document.getElementById('addLinkModal')).show();
+}
+
+function editSubCategory(id, name) {
+    // Future: Edit functionality
+    alert('Edit functionality will be added in future updates!');
+}
+</script>
+{% endblock %}

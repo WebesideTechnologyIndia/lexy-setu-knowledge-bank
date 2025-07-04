@@ -1,0 +1,579 @@
+{% extends 'rules/base.html' %}
+
+{% block title %}{{ rule.name }} - Rules Knowledge Bank{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Breadcrumb Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-light p-3 rounded">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:home' %}"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:category_detail' category.slug %}">{{ category.name }}</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:subcategory_detail' category.slug subcategory.slug %}">{{ subcategory.name }}</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rules:chapter_detail' category.slug subcategory.slug chapter.slug %}">{{ chapter.name }}</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ rule.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Rule Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient text-white p-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-balance-scale fa-3x me-4"></i>
+                            <div>
+                                <h1 class="h2 mb-2 fw-bold">{{ rule.name }}</h1>
+                                {% if rule.full_name %}
+                                    <p class="mb-1 opacity-75">{{ rule.full_name }}</p>
+                                {% endif %}
+                                <div class="d-flex gap-3">
+                                    {% if rule.rule_number %}
+                                        <span class="badge bg-light text-dark">
+                                            <i class="fas fa-hashtag me-1"></i>Rule {{ rule.rule_number }}
+                                        </span>
+                                    {% endif %}
+                                    {% if rule.year %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-calendar me-1"></i>{{ rule.year }}
+                                        </span>
+                                    {% endif %}
+                                    {% if rule.status %}
+                                        <span class="badge {% if rule.status == 'Active' %}bg-success{% elif rule.status == 'Amended' %}bg-info{% else %}bg-secondary{% endif %}">
+                                            <i class="fas fa-circle me-1"></i>{{ rule.status }}
+                                        </span>
+                                    {% endif %}
+                                    {% if rule.is_featured %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-star me-1"></i>Featured
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-2"></i>Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="window.print()">
+                                        <i class="fas fa-print me-2"></i>Print Rule
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="bookmarkRule()">
+                                        <i class="fas fa-bookmark me-2"></i>Bookmark
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'rules:add_sub_rule' %}">
+                                        <i class="fas fa-plus me-2"></i>Add Sub Rule
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if rule.short_description %}
+                <div class="card-body p-4">
+                    <div class="alert alert-success border-0">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>Rule Overview
+                        </h6>
+                        <p class="mb-0">{{ rule.short_description }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Detailed Description -->
+            {% if rule.long_description %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-text me-2"></i>Rule Description
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="rule-content">
+                        {{ rule.long_description|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sub Rules -->
+            {% if sub_rules %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-list-ol me-2"></i>Sub Rules ({{ sub_rules.count }})
+                    </h4>
+                    <a href="{% url 'rules:add_sub_rule' %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus me-2"></i>Add Sub Rule
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for sub_rule in sub_rules %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">
+                                        <a href="{{ sub_rule.get_absolute_url }}" class="text-decoration-none">
+                                            Rule {{ sub_rule.rule_number }}: {{ sub_rule.name }}
+                                        </a>
+                                    </h6>
+                                    {% if sub_rule.short_description %}
+                                        <p class="mb-2 text-muted">{{ sub_rule.short_description|truncatewords:25 }}</p>
+                                    {% endif %}
+                                    {% if sub_rule.content %}
+                                        <p class="mb-1 small text-muted">{{ sub_rule.content|striptags|truncatewords:30 }}</p>
+                                    {% endif %}
+                                    
+                                    <!-- Status Badge -->
+                                    {% if sub_rule.status %}
+                                        <span class="badge {% if sub_rule.status == 'Active' %}bg-success{% elif sub_rule.status == 'Amended' %}bg-info{% else %}bg-secondary{% endif %} me-2">
+                                            {{ sub_rule.status }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end ms-3">
+                                    {% if sub_rule.updated_at %}
+                                        <small class="text-muted d-block">{{ sub_rule.updated_at|date:"M d, Y" }}</small>
+                                    {% endif %}
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ sub_rule.get_absolute_url }}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'rules:edit_sub_rule' sub_rule.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-list-ol fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Sub Rules Yet</h5>
+                    <p class="text-muted mb-4">Start by adding sub rules to this rule</p>
+                    <a href="{% url 'rules:add_sub_rule' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Add First Sub Rule
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Procedures -->
+            {% if procedures %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Procedures ({{ procedures.count }})
+                    </h4>
+                    <a href="{% url 'rules:add_procedure' %}" class="btn btn-sm btn-info">
+                        <i class="fas fa-plus me-2"></i>Add Procedure
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for procedure in procedures|slice:":6" %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h6 class="fw-bold">{{ procedure.name }}</h6>
+                                <p class="mb-1">{{ procedure.title }}</p>
+                                {% if procedure.description %}
+                                    <small class="text-muted">{{ procedure.description|truncatewords:15 }}</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <a href="{{ procedure.get_absolute_url }}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if procedures.count > 6 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ rule.get_absolute_url }}procedures/" class="btn btn-outline-info">
+                                View All {{ procedures.count }} Procedures
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Forms -->
+            {% if forms %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-contract me-2"></i>Forms ({{ forms.count }})
+                    </h4>
+                    <a href="{% url 'rules:add_form' %}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-plus me-2"></i>Add Form
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for form in forms|slice:":6" %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h6 class="fw-bold">Form {{ form.form_number }}</h6>
+                                <p class="mb-1">{{ form.name }}</p>
+                                {% if form.description %}
+                                    <small class="text-muted">{{ form.description|truncatewords:15 }}</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    {% if form.pdf_file %}
+                                        <a href="{{ form.pdf_file.url }}" class="btn btn-sm btn-outline-danger me-2" target="_blank">
+                                            <i class="fas fa-file-pdf me-1"></i>PDF
+                                        </a>
+                                    {% endif %}
+                                    {% if form.excel_file %}
+                                        <a href="{{ form.excel_file.url }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                            <i class="fas fa-file-excel me-1"></i>Excel
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if forms.count > 6 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ rule.get_absolute_url }}forms/" class="btn btn-outline-warning">
+                                View All {{ forms.count }} Forms
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Amendments -->
+            {% if amendments %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Amendment History ({{ amendments.count }})
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% for amendment in amendments %}
+                    <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Amendment {{ amendment.amendment_number }}</h6>
+                                <p class="mb-1">{{ amendment.title }}</p>
+                                <small class="text-muted">{{ amendment.description|truncatewords:20 }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">{{ amendment.date|date:"M d, Y" }}</small>
+                                <span class="badge bg-info">{{ amendment.status }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Hierarchy Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sitemap me-2"></i>Hierarchy
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="hierarchy-path">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-folder text-primary me-2"></i>
+                            <a href="{% url 'rules:category_detail' category.slug %}">{{ category.name }}</a>
+                        </div>
+                        <div class="ms-3 d-flex align-items-center mb-2">
+                            <i class="fas fa-folder-open text-success me-2"></i>
+                            <a href="{% url 'rules:subcategory_detail' category.slug subcategory.slug %}">{{ subcategory.name }}</a>
+                        </div>
+                        <div class="ms-4 d-flex align-items-center mb-2">
+                            <i class="fas fa-book text-info me-2"></i>
+                            <a href="{% url 'rules:chapter_detail' category.slug subcategory.slug chapter.slug %}">{{ chapter.name }}</a>
+                        </div>
+                        <div class="ms-5 d-flex align-items-center">
+                            <i class="fas fa-balance-scale text-warning me-2"></i>
+                            <strong>{{ rule.name }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rule Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Rule Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        {% if rule.rule_number %}
+                        <dt class="col-sm-5">Rule Number:</dt>
+                        <dd class="col-sm-7">{{ rule.rule_number }}</dd>
+                        {% endif %}
+                        
+                        {% if rule.year %}
+                        <dt class="col-sm-5">Year:</dt>
+                        <dd class="col-sm-7">{{ rule.year }}</dd>
+                        {% endif %}
+                        
+                        {% if rule.status %}
+                        <dt class="col-sm-5">Status:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge {% if rule.status == 'Active' %}bg-success{% elif rule.status == 'Amended' %}bg-info{% else %}bg-secondary{% endif %}">
+                                {{ rule.status }}
+                            </span>
+                        </dd>
+                        {% endif %}
+                        
+                        {% if rule.effective_date %}
+                        <dt class="col-sm-5">Effective:</dt>
+                        <dd class="col-sm-7">{{ rule.effective_date|date:"M d, Y" }}</dd>
+                        {% endif %}
+                        
+                        {% if rule.last_amended_date %}
+                        <dt class="col-sm-5">Last Amended:</dt>
+                        <dd class="col-sm-7">{{ rule.last_amended_date|date:"M d, Y" }}</dd>
+                        {% endif %}
+                        
+                        {% if rule.authority %}
+                        <dt class="col-sm-5">Authority:</dt>
+                        <dd class="col-sm-7">{{ rule.authority }}</dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-5">Sub Rules:</dt>
+                        <dd class="col-sm-7">{{ sub_rules.count|default:0 }}</dd>
+                        
+                        <dt class="col-sm-5">Procedures:</dt>
+                        <dd class="col-sm-7">{{ procedures.count|default:0 }}</dd>
+                        
+                        <dt class="col-sm-5">Forms:</dt>
+                        <dd class="col-sm-7">{{ forms.count|default:0 }}</dd>
+                        
+                        {% if rule.created_at %}
+                        <dt class="col-sm-5">Added:</dt>
+                        <dd class="col-sm-7">{{ rule.created_at|date:"M d, Y" }}</dd>
+                        {% endif %}
+                        
+                        {% if rule.updated_at %}
+                        <dt class="col-sm-5">Updated:</dt>
+                        <dd class="col-sm-7">{{ rule.updated_at|date:"M d, Y" }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Recent Notifications -->
+            {% if notifications %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>Recent Updates
+                    </h5>
+                    <a href="{% url 'rules:add_notification' %}" class="btn btn-sm btn-danger">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% for notification in notifications|slice:":3" %}
+                    <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <h6 class="fw-bold">{{ notification.title }}</h6>
+                        <small class="text-muted d-block mb-1">{{ notification.notification_date|date:"M d, Y" }}</small>
+                        {% if notification.summary %}
+                            <p class="small mb-0">{{ notification.summary|truncatewords:20 }}</p>
+                        {% endif %}
+                        {% if notification.notification_number %}
+                            <small class="text-info">{{ notification.notification_number }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if notifications.count > 3 %}
+                        <div class="text-center">
+                            <a href="{{ rule.get_absolute_url }}notifications/" class="btn btn-sm btn-outline-danger">
+                                View All Notifications
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Related Rules -->
+            {% if related_rules %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-link me-2"></i>Related Rules
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for related_rule in related_rules %}
+                    <div class="mb-2">
+                        <a href="{{ related_rule.get_absolute_url }}" class="text-decoration-none d-block">
+                            <strong>{{ related_rule.name }}</strong>
+                            {% if related_rule.rule_number %}
+                                <small class="text-muted">(Rule {{ related_rule.rule_number }})</small>
+                            {% endif %}
+                        </a>
+                        {% if related_rule.short_description %}
+                            <small class="text-muted">{{ related_rule.short_description|truncatewords:10 }}</small>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'rules:add_sub_rule' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Add Sub Rule
+                        </a>
+                        <a href="{% url 'rules:add_procedure' %}" class="btn btn-info">
+                            <i class="fas fa-cogs me-2"></i>Add Procedure
+                        </a>
+                        <a href="{% url 'rules:add_form' %}" class="btn btn-warning">
+                            <i class="fas fa-file-contract me-2"></i>Add Form
+                        </a>
+                        <a href="{% url 'rules:add_notification' %}" class="btn btn-danger">
+                            <i class="fas fa-bell me-2"></i>Add Notification
+                        </a>
+                        <hr>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print Rule
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left me-2"></i>Go Back
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.rule-content {
+    line-height: 1.7;
+    font-size: 1.1rem;
+}
+
+.rule-content h1, .rule-content h2, .rule-content h3 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.rule-content p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.hierarchy-path {
+    line-height: 1.8;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.bg-gradient {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+@media print {
+    .card-header, .breadcrumb, .btn, .col-lg-4, .dropdown {
+        display: none !important;
+    }
+    
+    .col-lg-8 {
+        width: 100% !important;
+    }
+    
+    .rule-content {
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+}
+
+@media (max-width: 768px) {
+    .hierarchy-path {
+        font-size: 0.9rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+    }
+}
+</style>
+
+<script>
+function bookmarkRule() {
+    // Add bookmark functionality here
+    alert('Bookmark feature will be implemented');
+}
+
+// Add search functionality within rule content
+function searchInRule() {
+    const searchTerm = prompt('Search within this rule:');
+    if (searchTerm) {
+        const content = document.querySelector('.rule-content');
+        const text = content.innerHTML;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        content.innerHTML = text.replace(regex, '<mark>$1</mark>');
+    }
+}
+</script>
+{% endblock %}

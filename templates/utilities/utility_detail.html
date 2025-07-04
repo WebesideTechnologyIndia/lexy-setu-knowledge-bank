@@ -1,0 +1,512 @@
+<!-- templates/utilities/utility_detail.html -->
+{% extends 'utilities/base.html' %}
+
+{% block title %}{{ utility.title }}{% endblock %}
+
+{% block content %}
+<!-- DEBUG SECTION - Remove after fixing -->
+
+
+{% csrf_token %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Main Content -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="h3 mb-2">{{ utility.title }}</h1>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-primary">
+                                <i class="fas fa-folder"></i> {{ utility.category.display_name }}
+                            </span>
+                            <span class="badge bg-{% if utility.priority == 'urgent' %}danger{% elif utility.priority == 'high' %}warning{% elif utility.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                                <i class="fas fa-flag"></i> {{ utility.get_priority_display }}
+                            </span>
+                            {% if utility.is_featured %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-star"></i> Featured
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i> Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'utility_edit' utility.pk %}">
+                                <i class="fas fa-edit"></i> Edit Utility
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteUtility({{ utility.pk }})">
+                                <i class="fas fa-trash"></i> Delete Utility
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Content -->
+                <div class="utility-content">
+                    {{ utility.content|safe }}
+                </div>
+                
+                <!-- Tags -->
+                {% if utility.get_tags_list %}
+                    <div class="mt-4">
+                        <h6>Tags:</h6>
+                        {% for tag in utility.get_tags_list %}
+                            <span class="badge bg-light text-dark me-2 mb-1">
+                                <i class="fas fa-tag"></i> {{ tag }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Meta Information -->
+                <div class="row mt-4 pt-3 border-top">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar-plus"></i> Created: {{ utility.created_at|date:"F d, Y g:i A" }}
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar-edit"></i> Updated: {{ utility.updated_at|date:"F d, Y g:i A" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="mt-3">
+            <a href="{% url 'utility_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Utilities
+            </a>
+            <a href="{% url 'category_utilities' utility.category.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-folder"></i> More from {{ utility.category.display_name }}
+            </a>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Category Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-folder"></i> Category Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6>{{ utility.category.display_name }}</h6>
+                {% if utility.category.description %}
+                    <p class="text-muted small">{{ utility.category.description }}</p>
+                {% endif %}
+                
+                <!-- Parent Category (if subcategory) -->
+                {% if utility.category.parent %}
+                    <div class="mb-2">
+                        <small class="text-muted">Parent Category:</small><br>
+                        <a href="{% url 'category_utilities' utility.category.parent.pk %}" class="text-decoration-none">
+                            <i class="fas fa-folder-open"></i> {{ utility.category.parent.display_name }}
+                        </a>
+                    </div>
+                {% endif %}
+                
+                <!-- Category Actions -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'category_utilities' utility.category.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-list"></i> View All in Category
+                    </a>
+                    {% if utility.category.parent %}
+                        <a href="{% url 'category_utilities' utility.category.parent.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-level-up-alt"></i> View Parent Category
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar"></i> Quick Stats
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary mb-0">{{ category_stats.total_utilities }}</h5>
+                            <small class="text-muted">Total Utilities</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success mb-0">{{ category_stats.featured_count }}</h5>
+                        <small class="text-muted">Featured</small>
+                    </div>
+                </div>
+                
+                <!-- Priority Distribution -->
+                <div class="mt-3">
+                    <small class="text-muted">Priority Distribution:</small>
+                    <div class="mt-2">
+                        {% if category_stats.urgent_count > 0 %}
+                            <span class="badge bg-danger me-1">Urgent: {{ category_stats.urgent_count }}</span>
+                        {% endif %}
+                        {% if category_stats.high_count > 0 %}
+                            <span class="badge bg-warning me-1">High: {{ category_stats.high_count }}</span>
+                        {% endif %}
+                        {% if category_stats.medium_count > 0 %}
+                            <span class="badge bg-info me-1">Medium: {{ category_stats.medium_count }}</span>
+                        {% endif %}
+                        {% if category_stats.low_count > 0 %}
+                            <span class="badge bg-secondary me-1">Low: {{ category_stats.low_count }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Utilities -->
+        {% if related_utilities %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-link"></i> Related Utilities
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for related in related_utilities %}
+                        <div class="mb-3 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <h6 class="mb-1">
+                                <a href="{% url 'utility_detail' related.pk %}" class="text-decoration-none">
+                                    {{ related.title|truncatechars:40 }}
+                                </a>
+                            </h6>
+                            <small class="text-muted d-block mb-1">
+                                {{ related.content|striptags|truncatechars:80 }}
+                            </small>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{% if related.priority == 'urgent' %}danger{% elif related.priority == 'high' %}warning{% elif related.priority == 'medium' %}info{% else %}secondary{% endif %} badge-sm">
+                                    {{ related.get_priority_display }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ related.created_at|date:"M d" }}
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <!-- View More -->
+                    <div class="text-center mt-3">
+                        <a href="{% url 'category_utilities' utility.category.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> View More
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Share & Actions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-share-alt"></i> Share & Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i> Copy Link
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="printUtility()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <a href="{% url 'utility_edit' utility.pk %}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit Content
+                    </a>
+                </div>
+                
+                <!-- Last Updated Info -->
+                <div class="mt-3 pt-3 border-top">
+                    <small class="text-muted">
+                        <i class="fas fa-clock"></i> 
+                        Last updated {{ utility.updated_at|timesince }} ago
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "<strong>{{ utility.title }}</strong>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning"></i> This action cannot be undone.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash"></i> Delete Permanently
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Link copied to clipboard!
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .utility-content {
+        line-height: 1.8;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+    
+    /* CKEditor Table Styling - Override fixed dimensions */
+    .utility-content table {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+        margin: 15px 0;
+        border-collapse: collapse !important;
+        border: 1px solid #dee2e6 !important;
+        font-size: 14px;
+        table-layout: auto !important;
+    }
+    
+    .utility-content table th,
+    .utility-content table td {
+        padding: 8px 12px !important;
+        border: 1px solid #dee2e6 !important;
+        text-align: left;
+        vertical-align: top;
+        word-wrap: break-word;
+        width: auto !important;
+        height: auto !important;
+        min-height: 30px !important;
+        max-width: none !important;
+    }
+    
+    .utility-content table th {
+        background-color: #f8f9fa !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+    }
+    
+    .utility-content table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    .utility-content table tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    /* Handle nested tables from CKEditor */
+    .utility-content table table {
+        margin: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* Force auto dimensions for all table elements */
+    .utility-content table,
+    .utility-content table *,
+    .utility-content tr,
+    .utility-content td,
+    .utility-content th {
+        width: auto !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+    }
+    
+    /* Override CKEditor inline styles */
+    .utility-content table[style] {
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    .utility-content td[style],
+    .utility-content th[style] {
+        width: auto !important;
+        height: auto !important;
+    }
+    
+    /* Responsive tables */
+    .utility-content {
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+    
+    @media (max-width: 768px) {
+        .utility-content table {
+            font-size: 12px;
+        }
+        .utility-content table th,
+        .utility-content table td {
+            padding: 6px 8px !important;
+        }
+    }
+    
+    /* Other content styling */
+    .utility-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+    
+    .utility-content h1, .utility-content h2, .utility-content h3 {
+        margin-top: 25px;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+    
+    .utility-content p {
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .utility-content blockquote {
+        border-left: 4px solid #007bff;
+        padding-left: 15px;
+        margin: 15px 0;
+        font-style: italic;
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+    }
+    
+    .utility-content pre {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+        border: 1px solid #e9ecef;
+    }
+    
+    .utility-content ul, .utility-content ol {
+        margin-bottom: 15px;
+        padding-left: 30px;
+    }
+    
+    .utility-content li {
+        margin-bottom: 5px;
+    }
+    
+    /* Priority badge */
+    .priority-badge {
+        font-size: 0.75rem;
+    }
+    
+    /* Print styles */
+    @media print {
+        .col-lg-4, .btn, .dropdown, .toast-container {
+            display: none !important;
+        }
+        .col-lg-8 {
+            width: 100% !important;
+        }
+        .utility-content table {
+            page-break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function deleteUtility(utilityId) {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+        
+        document.getElementById('confirmDelete').onclick = function() {
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(`/utilities/utility/${utilityId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    modal.hide();
+                    window.location.href = "{% url 'utility_list' %}";
+                } else {
+                    alert('Error deleting utility');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting utility');
+            });
+        };
+    }
+    
+    function copyToClipboard() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(function() {
+            const toast = new bootstrap.Toast(document.getElementById('copyToast'));
+            toast.show();
+        }, function(err) {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy link');
+        });
+    }
+    
+    function printUtility() {
+        window.print();
+    }
+    
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

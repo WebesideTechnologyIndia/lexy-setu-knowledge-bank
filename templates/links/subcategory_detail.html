@@ -1,0 +1,145 @@
+{% extends 'links/base.html' %}
+
+{% block title %}{{ subcategory.name }} - Knowledge Bank{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'links:home' %}">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'links:category_detail' subcategory.category.slug %}">
+                    {{ subcategory.category.name }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active">{{ subcategory.name }}</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">
+                    <i class="fas fa-folder-open me-2"></i>
+                    {{ subcategory.name }}
+                </h2>
+                {% if subcategory.description %}
+                <p class="mb-0 mt-2">{{ subcategory.description }}</p>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Category: <strong>{{ subcategory.category.name }}</strong> | 
+                            Total Links: <strong>{{ subcategory.links.count }}</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <a href="{% url 'links:category_detail' subcategory.category.slug %}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to {{ subcategory.category.name }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Links List -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>
+                    Available Links ({{ subcategory.links.count }})
+                </h5>
+            </div>
+            
+            <div class="card-body p-0">
+                {% for link in subcategory.links.all %}
+                    {% if link.is_active %}
+                    <div class="link-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'links:link_redirect' link.id %}" 
+                                       target="_blank" 
+                                       class="text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-2 text-primary"></i>
+                                        {{ link.title }}
+                                    </a>
+                                </h6>
+                                {% if link.description %}
+                                <p class="text-muted small mb-0">{{ link.description }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <small class="text-muted">
+                                    <i class="fas fa-mouse-pointer me-1"></i>
+                                    {{ link.click_count }} clicks
+                                </small>
+                                <br>
+                                <a href="{% url 'links:link_redirect' link.id %}" 
+                                   target="_blank" 
+                                   class="btn btn-primary btn-sm mt-1">
+                                    <i class="fas fa-arrow-right me-1"></i>
+                                    Visit
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-link fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Links Available</h5>
+                    <p class="text-muted">Links will appear here once they are added.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Related Categories -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-sitemap me-2"></i>
+                    Other Categories in {{ subcategory.category.name }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for other_sub in subcategory.category.subcategories.all %}
+                        {% if other_sub.is_active and other_sub.id != subcategory.id %}
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="{% url 'links:subcategory_detail' subcategory.category.slug other_sub.slug %}" 
+                               class="btn btn-outline-secondary btn-sm w-100 text-start">
+                                <i class="fas fa-folder me-2"></i>
+                                {{ other_sub.name }}
+                                <span class="badge bg-secondary float-end">
+                                    {{ other_sub.links.count }}
+                                </span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% empty %}
+                    <div class="col-12">
+                        <p class="text-muted mb-0">No other subcategories available.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

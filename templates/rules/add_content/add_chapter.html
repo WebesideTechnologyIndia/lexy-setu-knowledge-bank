@@ -1,0 +1,501 @@
+<!-- templates/rules/add_content/add_chapter.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Chapter - Knowledge Bank</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+        }
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            padding: 0.75rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        .alert {
+            border-radius: 10px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .hierarchy-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 p-0">
+                <div class="sidebar">
+                    <div class="p-4">
+                        <h4 class="mb-4">
+                            <i class="fas fa-balance-scale me-2"></i>Tax Rules
+                        </h4>
+                        <nav class="nav flex-column">
+                            <a href="{% url 'rules:home' %}" class="nav-link text-white">
+                                <i class="fas fa-home me-2"></i>Home
+                            </a>
+                            <a href="{% url 'rules:add_content_home' %}" class="nav-link text-white">
+                                <i class="fas fa-plus me-2"></i>Add Content
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <div class="p-4">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'rules:home' %}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'rules:add_content_home' %}">Add Content</a></li>
+                            <li class="breadcrumb-item active">Add Chapter</li>
+                        </ol>
+                    </nav>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            <!-- Form Header -->
+                            <div class="form-header">
+                                <h2 class="mb-2">
+                                    <i class="fas fa-book me-3"></i>Add New Chapter
+                                </h2>
+                                <p class="mb-0">Add a chapter to structure your rules</p>
+                                <small class="text-white-50">Hierarchy: Category → SubCategory → Chapter → Rule</small>
+                            </div>
+                            
+                            <!-- Messages -->
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <!-- Form Container -->
+                            <div class="form-container">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    
+                                    <!-- Hierarchy Selection Section -->
+                                    <div class="hierarchy-section">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-sitemap me-2"></i>Select Hierarchy
+                                        </h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="id_category" class="form-label">
+                                                        <i class="fas fa-folder me-2"></i>Category *
+                                                    </label>
+                                                    <select class="form-select" id="id_category" name="category" required>
+                                                        <option value="">Select Category</option>
+                                                        {% for category in categories %}
+                                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="id_subcategory" class="form-label">
+                                                        <i class="fas fa-folder-open me-2"></i>SubCategory *
+                                                    </label>
+                                                    <select class="form-select" id="id_subcategory" name="subcategory" required disabled>
+                                                        <option value="">First select a Category</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Chapter Details Section -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="{{ form.parent_chapter.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-sitemap me-2"></i>Parent Chapter
+                                                </label>
+                                                {{ form.parent_chapter }}
+                                                <small class="form-text text-muted">Optional - for sub-chapters</small>
+                                                {% if form.parent_chapter.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.parent_chapter.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="{{ form.level.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-layer-group me-2"></i>Chapter Level
+                                                </label>
+                                                {{ form.level }}
+                                                <small class="form-text text-muted">Hierarchy level (1=main, 2=sub, etc.)</small>
+                                                {% if form.level.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.level.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label for="{{ form.chapter_number.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-hashtag me-2"></i>Chapter Number *
+                                                </label>
+                                                {{ form.chapter_number }}
+                                                <small class="form-text text-muted">e.g., I, II, 1, 2</small>
+                                                {% if form.chapter_number.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.chapter_number.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <div class="mb-3">
+                                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-tag me-2"></i>Chapter Name *
+                                                </label>
+                                                {{ form.name }}
+                                                {% if form.name.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.full_name.id_for_label }}" class="form-label">
+                                            <i class="fas fa-file-text me-2"></i>Full Chapter Name
+                                        </label>
+                                        {{ form.full_name }}
+                                        <small class="form-text text-muted">Complete official name of the chapter</small>
+                                        {% if form.full_name.errors %}
+                                            <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                                            <i class="fas fa-align-left me-2"></i>Description
+                                        </label>
+                                        {{ form.description }}
+                                        <small class="form-text text-muted">Brief description of what this chapter covers</small>
+                                        {% if form.description.errors %}
+                                            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.content.id_for_label }}" class="form-label">
+                                            <i class="fas fa-file-text me-2"></i>Chapter Content
+                                        </label>
+                                        {{ form.content }}
+                                        <small class="form-text text-muted">Detailed content of the chapter</small>
+                                        {% if form.content.errors %}
+                                            <div class="text-danger small mt-1">{{ form.content.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Additional Fields Row -->
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="{{ form.order.id_for_label }}" class="form-label">
+                                                    <i class="fas fa-sort-numeric-up me-2"></i>Display Order
+                                                </label>
+                                                {{ form.order }}
+                                                <small class="form-text text-muted">Order in which chapters appear</small>
+                                                {% if form.order.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.order.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mb-3 mt-4">
+                                                <div class="d-flex align-items-center">
+                                                    {{ form.is_active }}
+                                                    <label class="form-check-label ms-2" for="{{ form.is_active.id_for_label }}">
+                                                        <i class="fas fa-toggle-on me-2"></i>Active Chapter
+                                                    </label>
+                                                </div>
+                                                <small class="form-text text-muted">Whether this chapter is currently active</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mb-3 mt-4">
+                                                <div class="d-flex align-items-center">
+                                                    {{ form.has_sub_chapters }}
+                                                    <label class="form-check-label ms-2" for="{{ form.has_sub_chapters.id_for_label }}">
+                                                        <i class="fas fa-sitemap me-2"></i>Has Sub-chapters
+                                                    </label>
+                                                </div>
+                                                <small class="form-text text-muted">Whether this chapter contains sub-chapters</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{% url 'rules:add_content_home' %}" class="btn btn-secondary">
+                                            <i class="fas fa-arrow-left me-2"></i>Back
+                                        </a>
+                                        <div>
+                                            <button type="reset" class="btn btn-outline-secondary me-2">
+                                                <i class="fas fa-undo me-2"></i>Reset
+                                            </button>
+                                            <button type="submit" class="btn btn-submit">
+                                                <i class="fas fa-save me-2"></i>Create Chapter
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{ form.media }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    if (alert.parentNode) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            });
+        });
+        
+        // Dynamic subcategory loading based on selected category
+        const categorySelect = document.querySelector('#id_category');
+        const subcategorySelect = document.querySelector('#id_subcategory');
+        const parentChapterSelect = document.querySelector('#id_parent_chapter');
+        
+        if (categorySelect && subcategorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const categoryId = this.value;
+                subcategorySelect.innerHTML = '<option value="">Loading...</option>';
+                subcategorySelect.disabled = true;
+                
+                if (categoryId) {
+                    // Fetch subcategories for the selected category
+                    fetch(`/rules/api/subcategories/${categoryId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            subcategorySelect.innerHTML = '<option value="">Select SubCategory</option>';
+                            data.forEach(subcategory => {
+                                const option = document.createElement('option');
+                                option.value = subcategory.id;
+                                option.textContent = subcategory.name;
+                                subcategorySelect.appendChild(option);
+                            });
+                            subcategorySelect.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching subcategories:', error);
+                            subcategorySelect.innerHTML = '<option value="">Error loading subcategories</option>';
+                        });
+                } else {
+                    subcategorySelect.innerHTML = '<option value="">First select a Category</option>';
+                    subcategorySelect.disabled = true;
+                }
+                
+                // Reset parent chapter when category changes
+                if (parentChapterSelect) {
+                    parentChapterSelect.innerHTML = '<option value="">Select Parent Chapter</option>';
+                    parentChapterSelect.disabled = true;
+                }
+            });
+        }
+        
+        // Dynamic parent chapter loading based on selected subcategory
+        if (subcategorySelect && parentChapterSelect) {
+            subcategorySelect.addEventListener('change', function() {
+                const subcategoryId = this.value;
+                parentChapterSelect.innerHTML = '<option value="">Loading...</option>';
+                parentChapterSelect.disabled = true;
+                
+                if (subcategoryId) {
+                    // Fetch chapters for the selected subcategory
+                    fetch(`/rules/api/chapters/${subcategoryId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            parentChapterSelect.innerHTML = '<option value="">No Parent Chapter</option>';
+                            data.forEach(chapter => {
+                                const option = document.createElement('option');
+                                option.value = chapter.id;
+                                option.textContent = `${chapter.chapter_number} - ${chapter.name}`;
+                                parentChapterSelect.appendChild(option);
+                            });
+                            parentChapterSelect.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching chapters:', error);
+                            parentChapterSelect.innerHTML = '<option value="">Error loading chapters</option>';
+                        });
+                } else {
+                    parentChapterSelect.innerHTML = '<option value="">First select a SubCategory</option>';
+                    parentChapterSelect.disabled = true;
+                }
+            });
+        }
+        
+        // Auto-calculate order based on existing chapters
+        window.addEventListener('load', function() {
+            const orderField = document.querySelector('#id_order');
+            if (orderField && !orderField.value) {
+                orderField.value = '1';
+            }
+        });
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const categoryField = document.querySelector('#id_category');
+            const subcategoryField = document.querySelector('#id_subcategory');
+            const requiredFields = this.querySelectorAll('[required]');
+            let hasErrors = false;
+            
+            // Check category and subcategory specifically
+            if (!categoryField.value) {
+                categoryField.classList.add('is-invalid');
+                hasErrors = true;
+            } else {
+                categoryField.classList.remove('is-invalid');
+                categoryField.classList.add('is-valid');
+            }
+            
+            if (!subcategoryField.value) {
+                subcategoryField.classList.add('is-invalid');
+                hasErrors = true;
+            } else {
+                subcategoryField.classList.remove('is-invalid');
+                subcategoryField.classList.add('is-valid');
+            }
+            
+            // Check other required fields
+            requiredFields.forEach(function(field) {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    hasErrors = true;
+                } else {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                }
+            });
+            
+            if (hasErrors) {
+                e.preventDefault();
+                const firstError = this.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.focus();
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                // Show error message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <strong>Validation Error!</strong> Please fill in all required fields including Category and SubCategory.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                const form = this;
+                form.insertBefore(alertDiv, form.firstChild);
+                
+                // Auto-hide after 5 seconds
+                setTimeout(function() {
+                    if (alertDiv.parentNode) {
+                        const bsAlert = new bootstrap.Alert(alertDiv);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            }
+        });
+        
+        // Character count for textarea fields
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(function(textarea) {
+            const maxLength = textarea.getAttribute('maxlength');
+            if (maxLength) {
+                const helpText = textarea.parentNode.querySelector('.form-text');
+                if (helpText) {
+                    const counter = document.createElement('small');
+                    counter.className = 'text-muted float-end';
+                    counter.textContent = `0/${maxLength}`;
+                    helpText.parentNode.insertBefore(counter, helpText.nextSibling);
+                    
+                    textarea.addEventListener('input', function() {
+                        const currentLength = this.value.length;
+                        counter.textContent = `${currentLength}/${maxLength}`;
+                        
+                        if (currentLength > maxLength * 0.9) {
+                            counter.className = 'text-warning float-end';
+                        } else {
+                            counter.className = 'text-muted float-end';
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

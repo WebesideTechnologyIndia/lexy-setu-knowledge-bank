@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Knowledge Bank - Tax Laws{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .content-area {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .breadcrumb {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .hierarchy-level-0 { margin-left: 0; }
+        .hierarchy-level-1 { margin-left: 20px; }
+        .hierarchy-level-2 { margin-left: 40px; }
+        .hierarchy-level-3 { margin-left: 60px; }
+        
+        .section-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 p-0">
+                <div class="sidebar">
+                    <div class="p-4">
+                        <h4 class="mb-4">
+                            <i class="fas fa-balance-scale me-2"></i>
+                            Tax Laws
+                        </h4>
+                        
+                        <!-- Search Box -->
+                        <div class="mb-4">
+                            <form method="get" action="{% url 'acts:search' %}">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" placeholder="Search laws..." value="{{ request.GET.q }}">
+                                    <button class="btn btn-outline-light" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Navigation Menu -->
+                        <nav class="nav flex-column" id="navigation-menu">
+                            <!-- Dynamic menu will be loaded here -->
+                        </nav>
+                        
+                        <!-- Quick Links -->
+                        <div class="mt-4 pt-4 border-top border-white border-opacity-25">
+                            <h6 class="text-white-50 mb-3">Quick Actions</h6>
+                            <a href="{% url 'acts:bookmarks' %}" class="nav-link">
+                                <i class="fas fa-bookmark me-2"></i>My Bookmarks
+                            </a>
+                            <a href="/admin/" class="nav-link" target="_blank">
+                                <i class="fas fa-plus me-2"></i>Add Content
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <div class="content-area p-4">
+                    <!-- Breadcrumb -->
+                    {% if breadcrumb %}
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb p-3">
+                            {% for item in breadcrumb %}
+                                {% if forloop.last %}
+                                    <li class="breadcrumb-item active">{{ item.name }}</li>
+                                {% else %}
+                                    <li class="breadcrumb-item">
+                                        <a href="{{ item.url }}">{{ item.name }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ol>
+                    </nav>
+                    {% endif %}
+                    
+                    <!-- Main Content Block -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- CKEditor -->
+    {% load static %}
+    {{ form.media }}
+    
+    <script>
+        // Load navigation menu
+        fetch('{% url "acts:navigation_api" %}')
+            .then(response => response.json())
+            .then(data => {
+                const menu = document.getElementById('navigation-menu');
+                menu.innerHTML = buildNavigationHTML(data.navigation);
+            });
+        
+        function buildNavigationHTML(categories) {
+            let html = '';
+            categories.forEach(category => {
+                html += `
+                    <div class="nav-item">
+                        <a class="nav-link" href="${category.url}">
+                            <i class="fas fa-folder me-2"></i>${category.name}
+                        </a>
+                        ${category.acts.length > 0 ? buildActsHTML(category.acts) : ''}
+                    </div>
+                `;
+            });
+            return html;
+        }
+        
+        function buildActsHTML(acts) {
+            let html = '<div class="ms-3">';
+            acts.forEach(act => {
+                html += `
+                    <a class="nav-link small" href="${act.url}">
+                        <i class="fas fa-file-alt me-2"></i>${act.name}
+                    </a>
+                `;
+            });
+            html += '</div>';
+            return html;
+        }
+        
+        // Bookmark functionality
+        function toggleBookmark(contentType, objectId, title, url) {
+            fetch('{% url "acts:bookmark_toggle" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    content_type: contentType,
+                    object_id: objectId,
+                    title: title,
+                    url: url
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const btn = document.getElementById('bookmark-btn');
+                if (data.bookmarked) {
+                    btn.innerHTML = '<i class="fas fa-bookmark"></i> Bookmarked';
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                } else {
+                    btn.innerHTML = '<i class="far fa-bookmark"></i> Bookmark';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                }
+            });
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

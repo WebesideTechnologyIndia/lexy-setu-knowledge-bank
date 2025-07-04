@@ -1,0 +1,196 @@
+<!-- templates/utilities/utility_add.html -->
+{% extends 'utilities/base.html' %}
+
+{% block title %}Add New Utility{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus"></i> Add New Utility
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Title *</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger">
+                                {% for error in form.title.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">Category *</label>
+                        <select name="category" class="form-control" id="id_category" required>
+                            <option value="">Select Category</option>
+                            {% for category in categories %}
+                                {% if not category.parent %}
+                                    <optgroup label="{{ category.display_name }}">
+                                        <option value="{{ category.id }}" 
+                                                {% if form.category.value == category.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ category.display_name }}
+                                        </option>
+                                        {% for subcategory in category.subcategories.all %}
+                                            <option value="{{ subcategory.id }}"
+                                                    {% if form.category.value == subcategory.id|stringformat:"s" %}selected{% endif %}>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;{{ subcategory.display_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.category.errors %}
+                            <div class="text-danger">
+                                {% for error in form.category.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">Content *</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="text-danger">
+                                {% for error in form.content.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Use the editor above to format your content. You can add links, images, tables, and more.
+                        </small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">Priority</label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.priority.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.tags.id_for_label }}" class="form-label">Tags</label>
+                                {{ form.tags }}
+                                {% if form.tags.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.tags.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Separate tags with commas</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SEO Section -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">SEO Settings (Optional)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="{{ form.meta_title.id_for_label }}" class="form-label">Meta Title</label>
+                                {{ form.meta_title }}
+                                {% if form.meta_title.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.meta_title.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.meta_description.id_for_label }}" class="form-label">Meta Description</label>
+                                {{ form.meta_description }}
+                                {% if form.meta_description.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.meta_description.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Publishing Options -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Publishing Options</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-2">
+                                {{ form.is_published }}
+                                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                                    Publish immediately
+                                </label>
+                            </div>
+                            
+                            <div class="form-check">
+                                {{ form.is_featured }}
+                                <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                    Mark as featured
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Utility
+                        </button>
+                        <a href="{% url 'utility_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize CKEditor
+    CKEDITOR.replace('id_content', {
+        height: 300,
+        toolbar: [
+            { name: 'document', items: ['Source', '-', 'Save', 'NewPage', 'Preview', 'Print', '-', 'Templates'] },
+            { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
+            { name: 'editing', items: ['Find', 'Replace', '-', 'SelectAll', '-', 'Scayt'] },
+            '/',
+            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
+            { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-', 'BidiLtr', 'BidiRtl'] },
+            { name: 'links', items: ['Link', 'Unlink', 'Anchor'] },
+            { name: 'insert', items: ['Image', 'Table', 'HorizontalRule', 'SpecialChar', 'PageBreak', 'Iframe'] },
+            '/',
+            { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
+            { name: 'colors', items: ['TextColor', 'BGColor'] },
+            { name: 'tools', items: ['Maximize', 'ShowBlocks'] }
+        ]
+    });
+</script>
+{% endblock %}

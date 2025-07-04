@@ -1,0 +1,461 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}{{ category.name }} - Tax Forms Portal{% endblock %}
+
+{% block meta_description %}Download {{ category.name }} forms. {{ category.description|default:"Access all forms in this category with direct download links." }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'forms:home' %}">Home</a></li>
+            <li class="breadcrumb-item active">{{ category.name }}</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Category Header -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    {% if 'income' in category.name|lower %}
+                        <i class="fas fa-calculator me-3"></i>
+                    {% elif 'roc' in category.name|lower %}
+                        <i class="fas fa-building me-3"></i>
+                    {% elif 'gst' in category.name|lower %}
+                        <i class="fas fa-receipt me-3"></i>
+                    {% elif 'company' in category.name|lower %}
+                        <i class="fas fa-briefcase me-3"></i>
+                    {% elif 'llp' in category.name|lower %}
+                        <i class="fas fa-handshake me-3"></i>
+                    {% elif 'wealth' in category.name|lower %}
+                        <i class="fas fa-coins me-3"></i>
+                    {% elif 'service' in category.name|lower %}
+                        <i class="fas fa-tools me-3"></i>
+                    {% elif 'fema' in category.name|lower %}
+                        <i class="fas fa-globe me-3"></i>
+                    {% else %}
+                        <i class="fas fa-file-alt me-3"></i>
+                    {% endif %}
+                    {{ category.name }}
+                </h1>
+                {% if category.description %}
+                <p class="lead">{{ category.description|safe }}</p>
+                {% endif %}
+                <div class="d-flex align-items-center gap-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-alt me-2"></i>
+                        <span>{{ forms.paginator.count }} forms available</span>
+                    </div>
+                    {% if available_years %}
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar me-2"></i>
+                        <span>Years: {{ available_years|join:", " }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="category-stats">
+                    <div class="bg-white bg-opacity-20 rounded-3 p-4">
+                        <h3 class="display-5 fw-bold">{{ forms.paginator.count }}</h3>
+                        <p class="mb-0">Total Forms</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search and Filters -->
+<section class="py-4 bg-light">
+    <div class="container">
+        <form method="GET" class="row g-3 align-items-end">
+            <!-- Search -->
+            <div class="col-lg-4">
+                <label for="search" class="form-label fw-bold">Search Forms</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Search by form number or title..." value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Year Filter -->
+            {% if available_years %}
+            <div class="col-lg-3">
+                <label for="year" class="form-label fw-bold">Assessment Year</label>
+                <select class="form-select" name="year" id="year">
+                    <option value="">All Years</option>
+                    {% for year in available_years %}
+                    <option value="{{ year }}" {% if year == year_filter %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <!-- File Type Filter -->
+            {% if available_file_types %}
+            <div class="col-lg-3">
+                <label for="file_type" class="form-label fw-bold">File Type</label>
+                <select class="form-select" name="file_type" id="file_type">
+                    <option value="">All Types</option>
+                    {% for file_type in available_file_types %}
+                    <option value="{{ file_type }}" {% if file_type == file_type_filter %}selected{% endif %}>
+                        {% if file_type == 'pdf' %}PDF{% elif file_type == 'word' %}Word{% elif file_type == 'excel' %}Excel{% else %}{{ file_type|title }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <!-- Clear Filters -->
+            <div class="col-lg-2">
+                {% if search_query or year_filter or file_type_filter %}
+                <a href="{% url 'forms:category_forms' category.slug %}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-1"></i>Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+        
+        <!-- Active Filters Display -->
+        {% if search_query or year_filter or file_type_filter %}
+        <div class="mt-3">
+            <span class="fw-bold me-2">Active Filters:</span>
+            {% if search_query %}
+            <span class="badge bg-primary me-2">
+                Search: "{{ search_query }}"
+                <a href="?{% if year_filter %}year={{ year_filter }}&{% endif %}{% if file_type_filter %}file_type={{ file_type_filter }}{% endif %}" 
+                   class="text-white ms-1">×</a>
+            </span>
+            {% endif %}
+            {% if year_filter %}
+            <span class="badge bg-info me-2">
+                Year: {{ year_filter }}
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if file_type_filter %}file_type={{ file_type_filter }}{% endif %}" 
+                   class="text-white ms-1">×</a>
+            </span>
+            {% endif %}
+            {% if file_type_filter %}
+            <span class="badge bg-success me-2">
+                Type: {% if file_type_filter == 'pdf' %}PDF{% elif file_type_filter == 'word' %}Word{% elif file_type_filter == 'excel' %}Excel{% else %}{{ file_type_filter|title }}{% endif %}
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if year_filter %}year={{ year_filter }}{% endif %}" 
+                   class="text-white ms-1">×</a>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Forms List -->
+<section class="py-5">
+    <div class="container">
+        {% if forms %}
+        <!-- Results Info -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="mb-0">
+                    {% if search_query %}
+                        Search Results for "{{ search_query }}"
+                    {% else %}
+                        All {{ category.name }}
+                    {% endif %}
+                </h4>
+                <p class="text-muted mb-0">
+                    Showing {{ forms.start_index }}-{{ forms.end_index }} of {{ forms.paginator.count }} forms
+                </p>
+            </div>
+            
+            <!-- Sort Options -->
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-sort me-1"></i>Sort by
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=form_number">Form Number</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=title">Title</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-created_at">Newest First</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-download_count">Most Downloaded</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Forms Grid -->
+        <div class="row">
+            {% for form in forms %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100 form-card">
+                    <div class="card-body">
+                        <!-- Form Header -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary fs-6">{{ form.form_number }}</span>
+                            <div class="d-flex gap-1">
+                                <span class="badge bg-success">
+                                    {% if form.file_type == 'pdf' %}
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    {% elif form.file_type == 'word' %}
+                                        <i class="fas fa-file-word me-1"></i>Word
+                                    {% elif form.file_type == 'excel' %}
+                                        <i class="fas fa-file-excel me-1"></i>Excel
+                                    {% else %}
+                                        <i class="fas fa-file me-1"></i>{{ form.file_type|title }}
+                                    {% endif %}
+                                </span>
+                                {% if form.is_featured %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-star me-1"></i>Featured
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Form Title -->
+                        <h5 class="card-title">
+                            <a href="{% url 'forms:form_detail' form.pk %}" class="text-decoration-none">
+                                {{ form.title|truncatewords:8 }}
+                            </a>
+                        </h5>
+                        
+                        <!-- Form Description -->
+                        {% if form.description %}
+                        <p class="card-text text-muted">
+                            {{ form.description|striptags|truncatewords:15 }}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Form Details -->
+                        <div class="form-details mb-3">
+                            {% if form.assessment_year %}
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-calendar text-primary me-2"></i>
+                                <span>AY: {{ form.assessment_year }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-download text-success me-2"></i>
+                                <span>{{ form.download_count }} downloads</span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock text-warning me-2"></i>
+                                <span>Added {{ form.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Footer -->
+                    <div class="card-footer bg-transparent border-top-0">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'forms:form_detail' form.pk %}" 
+                               class="btn btn-outline-primary flex-grow-1">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            <a href="{% url 'forms:download_form' form.pk %}" 
+                               class="btn btn-success">
+                                <i class="fas fa-download me-1"></i>Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if forms.has_other_pages %}
+        <nav aria-label="Forms pagination" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if forms.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.file_type %}&file_type={{ request.GET.file_type }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ forms.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.file_type %}&file_type={{ request.GET.file_type }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in forms.paginator.page_range %}
+                {% if num == forms.number %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > forms.number|add:'-3' and num < forms.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.file_type %}&file_type={{ request.GET.file_type }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if forms.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ forms.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.file_type %}&file_type={{ request.GET.file_type }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ forms.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.file_type %}&file_type={{ request.GET.file_type }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- No Forms Found -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-search fa-4x text-muted"></i>
+            </div>
+            <h3 class="text-muted">No forms found</h3>
+            {% if search_query or year_filter or file_type_filter %}
+            <p class="text-muted mb-4">
+                No forms match your current filters. Try adjusting your search criteria.
+            </p>
+            <a href="{% url 'forms:category_forms' category.slug %}" class="btn btn-primary">
+                <i class="fas fa-times me-2"></i>Clear All Filters
+            </a>
+            {% else %}
+            <p class="text-muted mb-4">
+                There are currently no forms available in this category.
+            </p>
+            <a href="{% url 'forms:home' %}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Related Categories -->
+        {% if category.name and forms %}
+        <div class="mt-5 pt-5 border-top">
+            <h4 class="mb-4">You might also be interested in:</h4>
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'forms:popular' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-fire me-2"></i>Popular Forms
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'forms:recent' %}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-clock me-2"></i>Recent Forms
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'forms:search' %}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-search me-2"></i>Search All Forms
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'forms:home' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-home me-2"></i>All Categories
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Quick Stats -->
+{% if forms %}
+<section class="py-4 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-file-alt text-primary me-2 fa-lg"></i>
+                    <div>
+                        <strong>{{ forms.paginator.count }}</strong>
+                        <small class="d-block text-muted">Total Forms</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-download text-success me-2 fa-lg"></i>
+                    <div>
+                        <strong>{{ total_downloads|default:"1000+" }}</strong>
+                        <small class="d-block text-muted">Downloads</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-calendar text-info me-2 fa-lg"></i>
+                    <div>
+                        <strong>{{ available_years.count|default:"Multiple" }}</strong>
+                        <small class="d-block text-muted">Years Available</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-clock text-warning me-2 fa-lg"></i>
+                    <div>
+                        <strong>24/7</strong>
+                        <small class="d-block text-muted">Available</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit form on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const yearFilter = document.getElementById('year');
+    const fileTypeFilter = document.getElementById('file_type');
+    
+    if (yearFilter) {
+        yearFilter.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    if (fileTypeFilter) {
+        fileTypeFilter.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    // Add loading state to download buttons
+    const downloadButtons = document.querySelectorAll('a[href*="download"]');
+    downloadButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Downloading...';
+            this.classList.add('disabled');
+            
+            // Reset after 3 seconds
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.classList.remove('disabled');
+            }, 3000);
+        });
+    });
+});
+</script>
+{% endblock %}

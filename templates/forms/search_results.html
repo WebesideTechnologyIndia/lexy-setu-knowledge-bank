@@ -1,0 +1,468 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}
+{% if search_query %}
+Search Results for "{{ search_query }}" - Tax Forms Portal
+{% else %}
+Search Forms - Tax Forms Portal
+{% endif %}
+{% endblock %}
+
+{% block meta_description %}
+{% if search_query %}
+Search results for "{{ search_query }}" in tax forms. Find and download the forms you need.
+{% else %}
+Search through our comprehensive collection of Indian tax forms, ITR forms, GST forms and more.
+{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'forms:home' %}">Home</a></li>
+            <li class="breadcrumb-item active">
+                {% if search_query %}Search: "{{ search_query }}"{% else %}Search Forms{% endif %}
+            </li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search Header -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-search me-3"></i>
+                {% if search_query %}
+                    Search Results
+                {% else %}
+                    Search Forms
+                {% endif %}
+            </h1>
+            {% if search_query %}
+            <p class="lead">Results for: <span class="badge bg-warning text-dark fs-6">"{{ search_query }}"</span></p>
+            {% else %}
+            <p class="lead">Find the exact form you need from our comprehensive collection</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Advanced Search -->
+<section class="py-4 bg-light">
+    <div class="container">
+        <form method="GET" class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Search & Filter Forms
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Search Query -->
+                    <div class="col-lg-4">
+                        <label for="search" class="form-label fw-bold">Search Terms</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="search" name="q" 
+                                   placeholder="Form number, title, or keywords..." 
+                                   value="{{ search_query }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            <small>Examples: ITR-1, GST, Income Tax, Company Registration</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="col-lg-3">
+                        <label for="category" class="form-label fw-bold">Category</label>
+                        <select class="form-select" name="category" id="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.slug }}" {% if category.slug == category_filter %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Year Filter -->
+                    <div class="col-lg-3">
+                        <label for="year" class="form-label fw-bold">Assessment Year</label>
+                        <select class="form-select" name="year" id="year">
+                            <option value="">All Years</option>
+                            {% for year in available_years %}
+                            <option value="{{ year }}" {% if year == year_filter %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Clear/Reset -->
+                    <div class="col-lg-2 d-flex align-items-end">
+                        {% if search_query or category_filter or year_filter %}
+                        <a href="{% url 'forms:search' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                        {% else %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Active Filters -->
+                {% if search_query or category_filter or year_filter %}
+                <div class="mt-3 pt-3 border-top">
+                    <span class="fw-bold me-2">Active Filters:</span>
+                    {% if search_query %}
+                    <span class="badge bg-primary me-2">
+                        Search: "{{ search_query }}"
+                        <a href="?{% if category_filter %}category={{ category_filter }}&{% endif %}{% if year_filter %}year={{ year_filter }}{% endif %}" 
+                           class="text-white ms-1 text-decoration-none">×</a>
+                    </span>
+                    {% endif %}
+                    {% if category_filter %}
+                    <span class="badge bg-info me-2">
+                        Category: {{ categories|first.name }}
+                        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if year_filter %}year={{ year_filter }}{% endif %}" 
+                           class="text-white ms-1 text-decoration-none">×</a>
+                    </span>
+                    {% endif %}
+                    {% if year_filter %}
+                    <span class="badge bg-success me-2">
+                        Year: {{ year_filter }}
+                        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if category_filter %}category={{ category_filter }}{% endif %}" 
+                           class="text-white ms-1 text-decoration-none">×</a>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Search Results -->
+<section class="py-5">
+    <div class="container">
+        {% if forms %}
+        <!-- Results Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-1">
+                    {% if search_query %}
+                        Search Results for "{{ search_query }}"
+                    {% else %}
+                        All Forms
+                    {% endif %}
+                </h3>
+                <p class="text-muted mb-0">
+                    Found {{ forms.paginator.count }} form{{ forms.paginator.count|pluralize }} 
+                    {% if category_filter or year_filter %}
+                        with applied filters
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Sort Options -->
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-sort me-1"></i>Sort by
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=relevance">Relevance</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=form_number">Form Number</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=title">Title A-Z</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-download_count">Most Downloaded</a></li>
+                    <li><a class="dropdown-item" href="?{{ request.GET.urlencode }}&sort=-created_at">Newest First</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Results Grid -->
+        <div class="row">
+            {% for form in forms %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-start border-4 border-primary">
+                    <div class="card-body">
+                        <!-- Form Header -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-primary fs-6">{{ form.form_number }}</span>
+                                <span class="badge bg-secondary ms-1">{{ form.category.name }}</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <span class="badge bg-success">
+                                    {% if form.file_type == 'pdf' %}
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    {% elif form.file_type == 'word' %}
+                                        <i class="fas fa-file-word me-1"></i>Word
+                                    {% elif form.file_type == 'excel' %}
+                                        <i class="fas fa-file-excel me-1"></i>Excel
+                                    {% else %}
+                                        <i class="fas fa-file me-1"></i>{{ form.file_type|title }}
+                                    {% endif %}
+                                </span>
+                                {% if form.is_featured %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-star me-1"></i>Featured
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Form Title -->
+                        <h5 class="card-title">
+                            <a href="{% url 'forms:form_detail' form.pk %}" class="text-decoration-none">
+                                <!-- Highlight search terms -->
+                                {% if search_query %}
+                                    {{ form.title|highlight:search_query|safe }}
+                                {% else %}
+                                    {{ form.title }}
+                                {% endif %}
+                            </a>
+                        </h5>
+                        
+                        <!-- Form Description -->
+                        {% if form.description %}
+                        <p class="card-text text-muted">
+                            {% if search_query %}
+                                {{ form.description|striptags|highlight:search_query|truncatewords:20|safe }}
+                            {% else %}
+                                {{ form.description|striptags|truncatewords:20 }}
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Form Meta -->
+                        <div class="row g-2 mb-3 text-sm">
+                            {% if form.assessment_year %}
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>AY: {{ form.assessment_year }}
+                                </small>
+                            </div>
+                            {% endif %}
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-download me-1"></i>{{ form.download_count }} downloads
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ form.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            {% if form.file_size %}
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-hdd me-1"></i>{{ form.get_file_size_display }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'forms:form_detail' form.pk %}" class="btn btn-outline-primary flex-grow-1">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            <a href="{% url 'forms:download_form' form.pk %}" class="btn btn-success">
+                                <i class="fas fa-download me-1"></i>Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if forms.has_other_pages %}
+        <nav aria-label="Search results pagination" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if forms.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ forms.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in forms.paginator.page_range %}
+                {% if num == forms.number %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > forms.number|add:'-3' and num < forms.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if forms.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ forms.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ forms.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- No Results -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-search fa-4x text-muted"></i>
+            </div>
+            
+            {% if search_query or category_filter or year_filter %}
+            <h3 class="text-muted">No forms found</h3>
+            <p class="text-muted mb-4">
+                We couldn't find any forms matching your search criteria.
+            </p>
+            
+            <!-- Search Suggestions -->
+            <div class="card mx-auto" style="max-width: 600px;">
+                <div class="card-header">
+                    <h5 class="mb-0">Search Suggestions</h5>
+                </div>
+                <div class="card-body text-start">
+                    <ul class="mb-3">
+                        <li>Check your spelling and try again</li>
+                        <li>Use broader search terms (e.g., "ITR" instead of "ITR-1 2024")</li>
+                        <li>Remove some filters to see more results</li>
+                        <li>Try searching for just the form number</li>
+                    </ul>
+                    
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{% url 'forms:search' %}" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>New Search
+                        </a>
+                        <a href="{% url 'forms:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Browse Categories
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            {% else %}
+            <h3 class="text-muted">Start Your Search</h3>
+            <p class="text-muted mb-4">
+                Enter keywords to search through our comprehensive collection of forms.
+            </p>
+            
+            <!-- Popular Searches -->
+            <div class="card mx-auto" style="max-width: 600px;">
+                <div class="card-header">
+                    <h5 class="mb-0">Popular Searches</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="?q=ITR-1" class="btn btn-outline-primary btn-sm">ITR-1</a>
+                        <a href="?q=GST" class="btn btn-outline-primary btn-sm">GST Forms</a>
+                        <a href="?q=ROC" class="btn btn-outline-primary btn-sm">ROC Forms</a>
+                        <a href="?q=Income Tax" class="btn btn-outline-primary btn-sm">Income Tax</a>
+                        <a href="?q=Company" class="btn btn-outline-primary btn-sm">Company Forms</a>
+                        <a href="?q=TDS" class="btn btn-outline-primary btn-sm">TDS Forms</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Search Tips -->
+        <div class="row mt-5 pt-4 border-top">
+            <div class="col-lg-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>Search Tips
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>Use specific form numbers for exact matches (e.g., "ITR-1")</li>
+                                    <li>Try partial matches (e.g., "GST" for all GST forms)</li>
+                                    <li>Search by purpose (e.g., "income tax", "company registration")</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>Use filters to narrow down results by category and year</li>
+                                    <li>Popular forms: ITR-1, ITR-2, GST-1, ROC-1</li>
+                                    <li>All forms are official and up-to-date</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const categoryFilter = document.getElementById('category');
+    const yearFilter = document.getElementById('year');
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    if (yearFilter) {
+        yearFilter.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    // Search input auto-complete simulation
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Add debounced search suggestions here if needed
+        });
+    }
+    
+    // Track search analytics
+    const searchForm = document.querySelector('form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function() {
+            const query = searchInput.value;
+            console.log('Search performed:', query);
+            // Add analytics tracking here
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,461 @@
+{% extends 'forms/base.html' %}
+
+{% block title %}{{ form.form_number }} - {{ form.title }} - Tax Forms Portal{% endblock %}
+
+{% block meta_description %}Download {{ form.form_number }} - {{ form.title }}. {{ form.description|striptags|truncatewords:25|default:"Official form with direct download link." }}{% endblock %}
+
+{% block meta_keywords %}{{ form.form_number }}, {{ form.title }}, {{ form.category.name }}, tax forms, download{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'forms:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'forms:category_forms' form.category.slug %}">{{ form.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ form.form_number }}</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Form Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <span class="badge bg-primary fs-5 mb-2">{{ form.form_number }}</span>
+                            {% if form.is_featured %}
+                            <span class="badge bg-warning ms-2">
+                                <i class="fas fa-star me-1"></i>Featured
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success fs-6">
+                                {% if form.file_type == 'pdf' %}
+                                    <i class="fas fa-file-pdf me-1"></i>PDF
+                                {% elif form.file_type == 'word' %}
+                                    <i class="fas fa-file-word me-1"></i>Word
+                                {% elif form.file_type == 'excel' %}
+                                    <i class="fas fa-file-excel me-1"></i>Excel
+                                {% else %}
+                                    <i class="fas fa-file me-1"></i>{{ form.file_type|title }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <h1 class="display-6 fw-bold text-primary mb-3">{{ form.title }}</h1>
+                    
+                    <!-- Form Meta Info -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-folder text-primary me-2"></i>
+                                <span><strong>Category:</strong> 
+                                    <a href="{% url 'forms:category_forms' form.category.slug %}" class="text-decoration-none">
+                                        {{ form.category.name }}
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        {% if form.assessment_year %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar text-success me-2"></i>
+                                <span><strong>Assessment Year:</strong> {{ form.assessment_year }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if form.financial_year %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt text-info me-2"></i>
+                                <span><strong>Financial Year:</strong> {{ form.financial_year }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-download text-warning me-2"></i>
+                                <span><strong>Downloads:</strong> {{ form.download_count }}</span>
+                            </div>
+                        </div>
+                        {% if form.file_size %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-hdd text-secondary me-2"></i>
+                                <span><strong>File Size:</strong> {{ form.get_file_size_display }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                <span><strong>Added:</strong> {{ form.created_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Download Button -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{% url 'forms:download_form' form.pk %}" class="btn btn-success btn-lg me-md-2" id="downloadBtn">
+                            <i class="fas fa-download me-2"></i>Download Form
+                        </a>
+                        {% if form.external_url %}
+                        <a href="{{ form.external_url }}" target="_blank" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-external-link-alt me-2"></i>View Online
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Description -->
+            {% if form.description %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Description
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-description">
+                        {{ form.description|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Related Links -->
+            {% if form.related_links.all %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>Related Links
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for link in form.related_links.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                {% if link.link_type == 'official' %}
+                                    <i class="fas fa-external-link-alt text-primary me-2 mt-1"></i>
+                                {% elif link.link_type == 'guide' %}
+                                    <i class="fas fa-book text-success me-2 mt-1"></i>
+                                {% elif link.link_type == 'instruction' %}
+                                    <i class="fas fa-list-ol text-info me-2 mt-1"></i>
+                                {% elif link.link_type == 'sample' %}
+                                    <i class="fas fa-file-alt text-warning me-2 mt-1"></i>
+                                {% else %}
+                                    <i class="fas fa-link text-secondary me-2 mt-1"></i>
+                                {% endif %}
+                                <div>
+                                    <a href="{{ link.url }}" target="_blank" class="text-decoration-none fw-bold">
+                                        {{ link.title }}
+                                    </a>
+                                    {% if link.description %}
+                                    <p class="text-muted mb-0 small">{{ link.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Share Options -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-share-alt me-2"></i>Share This Form
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="shareUrl" class="form-label">Share URL:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="shareUrl" 
+                                       value="{{ request.build_absolute_uri }}" readonly>
+                                <button class="btn btn-outline-primary" onclick="copyToClipboard('shareUrl')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Social Share:</label>
+                            <div class="d-flex gap-2">
+                                <a href="https://wa.me/?text={{ form.title|urlencode }}%20{{ request.build_absolute_uri|urlencode }}" 
+                                   target="_blank" class="btn btn-success btn-sm">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                                <a href="https://twitter.com/intent/tweet?text={{ form.title|urlencode }}&url={{ request.build_absolute_uri|urlencode }}" 
+                                   target="_blank" class="btn btn-info btn-sm">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" 
+                                   target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fab fa-facebook"></i>
+                                </a>
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" 
+                                   target="_blank" class="btn btn-dark btn-sm">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4 sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'forms:download_form' form.pk %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-download me-2"></i>Download Now
+                        </a>
+                        {% if form.external_url %}
+                        <a href="{{ form.external_url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-2"></i>View Online
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'forms:category_forms' form.category.slug %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-folder me-2"></i>More {{ form.category.name }}
+                        </a>
+                    </div>
+                    
+                    <!-- Form Stats -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h6 class="fw-bold mb-3">Form Statistics</h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <div class="h5 text-primary mb-0">{{ form.download_count }}</div>
+                                    <small class="text-muted">Downloads</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <div class="h5 text-success mb-0">{{ form.created_at|timesince }}</div>
+                                    <small class="text-muted">Age</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Forms -->
+            {% if related_forms %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Related Forms
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% for related_form in related_forms %}
+                    <div class="d-flex align-items-start mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div class="flex-shrink-0 me-3">
+                            <span class="badge bg-primary">{{ related_form.form_number }}</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <a href="{% url 'forms:form_detail' related_form.pk %}" class="text-decoration-none">
+                                    {{ related_form.title|truncatewords:6 }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                <i class="fas fa-download me-1"></i>{{ related_form.download_count }} downloads
+                            </small>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <a href="{% url 'forms:download_form' related_form.pk %}" 
+                               class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'forms:category_forms' form.category.slug %}" class="btn btn-outline-primary btn-sm">
+                            View All {{ form.category.name }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Help & Support -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Having trouble with this form? We're here to help!</p>
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-phone me-2"></i>Contact Support
+                        </a>
+                        <a href="#" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-book me-2"></i>View Instructions
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-envelope me-2"></i>Report Issue
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Download Modal -->
+<div class="modal fade" id="downloadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-download me-2"></i>Download Started
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-success fa-3x"></i>
+                </div>
+                <h4>{{ form.form_number }} - {{ form.title|truncatewords:8 }}</h4>
+                <p class="text-muted">Your download should start automatically. If it doesn't, click the link below.</p>
+                <a href="{% url 'forms:download_form' form.pk %}" class="btn btn-success">
+                    <i class="fas fa-download me-2"></i>Download Now
+                </a>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>Safe and secure download from official source
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Download button click handler
+    const downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function(e) {
+            // Show download modal
+            const modal = new bootstrap.Modal(document.getElementById('downloadModal'));
+            modal.show();
+            
+            // Track download (you can add analytics here)
+            console.log('Download started for form: {{ form.form_number }}');
+        });
+    }
+    
+    // Add loading states to download buttons
+    const allDownloadBtns = document.querySelectorAll('a[href*="download"]');
+    allDownloadBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting Download...';
+            this.classList.add('disabled');
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.classList.remove('disabled');
+            }, 3000);
+        });
+    });
+    
+    // Social share tracking
+    const socialLinks = document.querySelectorAll('a[href*="twitter"], a[href*="facebook"], a[href*="linkedin"], a[href*="whatsapp"]');
+    socialLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            console.log('Social share clicked:', this.href);
+        });
+    });
+});
+
+// Copy to clipboard function
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        
+        // Show success feedback
+        const btn = element.nextElementSibling;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+        
+        // Show toast notification
+        showToast('URL copied to clipboard!', 'success');
+    } catch (err) {
+        showToast('Failed to copy URL', 'error');
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Show toast
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove element after hiding
+    toast.addEventListener('hidden.bs.toast', () => {
+        document.body.removeChild(toast);
+    });
+}
+</script>
+{% endblock %}

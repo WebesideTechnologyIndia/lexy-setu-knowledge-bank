@@ -1,0 +1,154 @@
+{% extends 'links/base.html' %}
+
+{% block title %}Search Results - Knowledge Bank{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Search Header -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="mb-3">
+                    <i class="fas fa-search me-2"></i>
+                    Search Results
+                </h2>
+                
+                <!-- Search Form -->
+                <form method="GET" action="{% url 'links:search' %}" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-lg" 
+                               name="q" value="{{ query }}" 
+                               placeholder="Search for links..." 
+                               aria-label="Search">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                    </div>
+                </form>
+                
+                {% if query %}
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {% if total_results %}
+                        Found <strong>{{ total_results }}</strong> result{{ total_results|pluralize }} for "<strong>{{ query }}</strong>"
+                    {% else %}
+                        No results found for "<strong>{{ query }}</strong>"
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        {% if results %}
+        <div class="row">
+            {% for result in results %}
+            <div class="col-lg-6 col-md-6 mb-3">
+                <div class="card search-result-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary">{{ result.category }}</span>
+                            <small class="text-muted">{{ result.link.click_count }} clicks</small>
+                        </div>
+                        
+                        <h6 class="card-title">
+                            <a href="{% url 'links:link_redirect' result.link.id %}" 
+                               target="_blank" 
+                               class="text-decoration-none">
+                                <i class="fas fa-external-link-alt me-1 text-primary"></i>
+                                {{ result.link.title }}
+                            </a>
+                        </h6>
+                        
+                        <p class="text-muted small mb-2">
+                            <i class="fas fa-folder me-1"></i>
+                            {{ result.category }} > {{ result.subcategory }}
+                        </p>
+                        
+                        {% if result.link.description %}
+                        <p class="card-text small">{{ result.link.description|truncatewords:15 }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'links:link_redirect' result.link.id %}" 
+                               target="_blank" 
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-arrow-right me-1"></i>Visit Link
+                            </a>
+                            <a href="{% url 'links:subcategory_detail' result.link.subcategory.category.slug result.link.subcategory.slug %}" 
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Category
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% elif query %}
+        <!-- No Results -->
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Results Found</h4>
+                <p class="text-muted mb-4">
+                    We couldn't find any links matching "<strong>{{ query }}</strong>".
+                </p>
+                
+                <div class="suggestions">
+                    <h6 class="text-muted mb-3">Try searching for:</h6>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a href="{% url 'links:search' %}?q=income+tax" class="btn btn-outline-primary btn-sm">Income Tax</a>
+                        <a href="{% url 'links:search' %}?q=service+tax" class="btn btn-outline-primary btn-sm">Service Tax</a>
+                        <a href="{% url 'links:search' %}?q=PAN" class="btn btn-outline-primary btn-sm">PAN</a>
+                        <a href="{% url 'links:search' %}?q=GST" class="btn btn-outline-primary btn-sm">GST</a>
+                        <a href="{% url 'links:search' %}?q=refund" class="btn btn-outline-primary btn-sm">Refund</a>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'links:home' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-1"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Initial Search Page -->
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                <h4>Search Links</h4>
+                <p class="text-muted mb-4">
+                    Enter keywords to find the links you're looking for.
+                </p>
+                
+                <div class="popular-searches">
+                    <h6 class="text-muted mb-3">Popular Searches:</h6>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a href="{% url 'links:search' %}?q=e-payment" class="btn btn-outline-primary btn-sm">E-payment</a>
+                        <a href="{% url 'links:search' %}?q=login" class="btn btn-outline-primary btn-sm">Login</a>
+                        <a href="{% url 'links:search' %}?q=verify" class="btn btn-outline-primary btn-sm">Verify</a>
+                        <a href="{% url 'links:search' %}?q=application" class="btn btn-outline-primary btn-sm">Application</a>
+                        <a href="{% url 'links:search' %}?q=status" class="btn btn-outline-primary btn-sm">Status</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.search-result-card {
+    transition: transform 0.2s ease;
+    border: 1px solid #e9ecef;
+}
+.search-result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

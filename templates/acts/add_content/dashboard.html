@@ -1,0 +1,44 @@
+<!-- templates/acts/add_content/dashboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Content Dashboard - Test</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🎉 Content Management Dashboard</h1>
+        <p>Template is working!</p>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Stats</h5>
+                        <p>Categories: {{ categories_count }}</p>
+                        <p>Acts: {{ acts_count }}</p>
+                        <p>Chapters: {{ chapters_count }}</p>
+                        <p>Sections: {{ sections_count }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Quick Actions</h5>
+                        <a href="{% url 'acts:add_category' %}" class="btn btn-primary mb-2 d-block">Add Category</a>
+                        <a href="{% url 'acts:add_subcategory' %}" class="btn btn-primary mb-2 d-block">Add Subcategory</a>
+                        <a href="{% url 'acts:add_act' %}" class="btn btn-primary mb-2 d-block">Add Act</a>
+                        <a href="{% url 'acts:add_chapter' %}" class="btn btn-primary mb-2 d-block">Add Chapter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'acts:home' %}" class="btn btn-secondary">← Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>
