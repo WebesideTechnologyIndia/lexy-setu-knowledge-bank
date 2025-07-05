@@ -147,6 +147,7 @@ def unauthorized_response():
         status=401
     )
 
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_notification_list(request):
@@ -159,7 +160,7 @@ def api_notification_list(request):
         search_query = request.GET.get('search')
         page_number = request.GET.get('page', 1)
         
-        notifications = Notification.objects.filter(is_active=True)
+        notifications = Notification.objects.filter(is_active=True).select_related('category')
         
         if category_filter:
             notifications = notifications.filter(category__name=category_filter)
@@ -167,8 +168,12 @@ def api_notification_list(request):
         if search_query:
             notifications = notifications.filter(
                 Q(title__icontains=search_query) | 
-                Q(content__icontains=search_query)
+                Q(content__icontains=search_query) |
+                Q(notification_number__icontains=search_query)
             )
+        
+        # Order by latest first
+        notifications = notifications.order_by('-created_at')
         
         # Pagination
         paginator = Paginator(notifications, 10)
@@ -180,8 +185,10 @@ def api_notification_list(request):
             notifications_data.append({
                 'id': notification.pk,
                 'title': notification.title,
-                'content': notification.content,
+                'content': notification.content[:300] + '...' if len(notification.content) > 300 else notification.content,
                 'category': notification.category.name if notification.category else None,
+                'notification_number': getattr(notification, 'notification_number', ''),
+                'notification_date': getattr(notification, 'notification_date', notification.created_at).strftime('%Y-%m-%d') if hasattr(notification, 'notification_date') or hasattr(notification, 'created_at') else '',
                 'created_at': notification.created_at.isoformat() if hasattr(notification, 'created_at') else None,
             })
         
@@ -205,6 +212,7 @@ def api_notification_list(request):
     except Exception as e:
         return api_response(success=False, message=str(e), status=500)
 
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_notification_detail(request, pk):
@@ -221,8 +229,10 @@ def api_notification_detail(request, pk):
             'content': notification.content,
             'category': {
                 'id': notification.category.pk if notification.category else None,
-                'name': notification.category.name if notification.category else None,
+                'name': notification.category.name if notification.category else 'No Category',
             },
+            'notification_number': getattr(notification, 'notification_number', ''),
+            'notification_date': getattr(notification, 'notification_date', notification.created_at).strftime('%Y-%m-%d') if hasattr(notification, 'notification_date') or hasattr(notification, 'created_at') else '',
             'created_at': notification.created_at.isoformat() if hasattr(notification, 'created_at') else None,
         }
         
@@ -230,6 +240,8 @@ def api_notification_detail(request, pk):
         
     except Exception as e:
         return api_response(success=False, message=str(e), status=404)
+
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -368,3 +380,8 @@ def api_category_notifications(request, category_name):
         
     except Exception as e:
         return api_response(success=False, message=str(e), status=404)
+    
+
+def spa_view(request):
+    """Single Page Application view"""
+    return render(request, 'notifications_spa.html')

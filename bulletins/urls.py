@@ -22,4 +22,6 @@ urlpatterns = [
     path('api/notifications/<int:pk>/edit/', views.api_edit_notification, name='api_edit_notification'),
     path('api/notifications/<int:pk>/delete/', views.api_delete_notification, name='api_delete_notification'),
     path('api/notifications/category/<str:category_name>/', views.api_category_notifications, name='api_category_notifications'),
+    path('spa/', views.spa_view, name='spa_view'),
+
 ]
