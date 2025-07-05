@@ -65,7 +65,7 @@ def add_notification(request):
         form = NotificationForm()
     
     categories = NotificationCategory.objects.prefetch_related('subcategories')
-    return render(request, 'notifications/add_notification.html', {
+    return render(request, 'notifications/add_notification.html', {  # Yeh line check karo
         'form': form,
         'categories': categories
     })
