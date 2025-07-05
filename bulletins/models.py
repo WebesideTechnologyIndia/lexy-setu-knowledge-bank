@@ -1,5 +1,7 @@
+# models.py
 from django.db import models
 from ckeditor.fields import RichTextField
+from django.utils import timezone
 
 class NotificationCategory(models.Model):
     CATEGORY_CHOICES = [
@@ -54,6 +56,8 @@ class NotificationCategory(models.Model):
 
 class Notification(models.Model):
     title = models.CharField(max_length=255)
+    notification_number = models.CharField(max_length=100, unique=True, help_text="Enter notification number (e.g., NOT/2024/001)")
+    notification_date = models.DateField(default=timezone.now, help_text="Date of the notification")
     content = RichTextField()
     category = models.ForeignKey(NotificationCategory, on_delete=models.CASCADE, related_name='notifications')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -61,7 +65,8 @@ class Notification(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.title} - {self.category.display_name}"
+        return f"{self.notification_number} - {self.title}"
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-notification_date', '-created_at']
+        unique_together = ['notification_number']  # Ensure notification number is unique
