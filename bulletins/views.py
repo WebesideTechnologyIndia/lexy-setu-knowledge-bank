@@ -71,24 +71,25 @@ def add_notification(request):
     })
 
 def edit_notification(request, pk):
-    """Edit existing notification - WEB VERSION"""
     notification = get_object_or_404(Notification, pk=pk)
-    
+
     if request.method == 'POST':
-        form = NotificationForm(request.POST, instance=notification)
+        form = NotificationForm(request.POST, request.FILES, instance=notification)  # ✅ Added request.FILES
         if form.is_valid():
             notification = form.save()
             messages.success(request, f'Notification "{notification.title}" successfully updated!')
             return redirect('notification_detail', pk=notification.pk)
         else:
+            print(form.errors)  # ✅ Debug print
             messages.error(request, 'Please correct the errors below.')
     else:
         form = NotificationForm(instance=notification)
-    
+
     return render(request, 'notifications/edit_notification.html', {
-        'form': form, 
+        'form': form,
         'notification': notification
     })
+
 
 def delete_notification(request, pk):
     """Delete notification (soft delete) - WEB VERSION"""

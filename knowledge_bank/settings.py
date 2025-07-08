@@ -31,13 +31,13 @@ ALLOWED_HOSTS = [
     'www.resources.webesidetechnology.com', 
     'localhost',
     '127.0.0.1',
-    'lexsetu.webeside.in',  # ✅ Add this
-    'www.lexsetu.webeside.in',  # ✅ (optional, if using www version)
+    'lexsetu.webeside.in',  
+    'www.lexsetu.webeside.in',  
 ]
 
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
