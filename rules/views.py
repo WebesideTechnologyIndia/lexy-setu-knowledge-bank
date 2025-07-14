@@ -1466,3 +1466,320 @@ def favorites_view(request):
             ]
         }
         return render(request, 'rules/favorites.html', context)
+    
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+import traceback
+
+# Import your models - UPDATE THESE IMPORTS ACCORDING TO YOUR APP STRUCTURE
+from .models import SubCategory, Chapter, Rule, RuleSection, SubRule, Form, Notification
+# OR if models are in different app:
+# from your_app.models import SubCategory, Chapter, Rule, RuleSection, SubRule, Form, Notification
+
+# Secret key for authentication
+SECRET_KEY = "Rahul@121005"
+
+def authenticate_request(request):
+    """Check if the request has valid secret key in headers"""
+    # Check both secret-key and secret_key for flexibility
+    secret_key = request.headers.get('secret-key') or request.headers.get('secret_key')
+    return secret_key == SECRET_KEY
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_subcategory_complete_data(request, subcategory_slug):
+    """
+    Single API endpoint to get complete hierarchical data for a subcategory
+    Frontend ko bas subcategory slug bhejni hai with secret key in header
+    
+    URL: /api/subcategory/{subcategory_slug}/
+    Headers: secret-key: Rahul@121005
+    
+    Returns: Complete nested data structure with chapters -> rules -> sections -> subrules + forms + notifications
+    """
+    
+    # Check authentication
+    if not authenticate_request(request):
+        return JsonResponse({
+            'success': False,
+            'error': 'Unauthorized access. Invalid secret key.'
+        }, status=401)
+    
+    try:
+        # Get subcategory by slug with all fields
+        subcategory = get_object_or_404(SubCategory, slug=subcategory_slug, is_active=True)
+        
+        # Get all chapters for this subcategory
+        chapters = Chapter.objects.filter(
+            subcategory_id=subcategory.id, 
+            is_active=True
+        ).order_by('order', 'chapter_number')
+        
+        chapters_data = []
+        
+        for chapter in chapters:
+            # Get all rules for this chapter
+            rules = Rule.objects.filter(
+                chapter_id=chapter.id, 
+                is_active=True
+            ).order_by('order', 'name')
+            
+            rules_data = []
+            
+            for rule in rules:
+                # Get all sections for this rule
+                sections = RuleSection.objects.filter(
+                    rule_id=rule.id, 
+                    is_active=True
+                ).order_by('order', 'section_number')
+                
+                sections_data = []
+                
+                for section in sections:
+                    # Get all subrules for this section
+                    subrules = SubRule.objects.filter(
+                        section_id=section.id, 
+                        is_active=True
+                    ).order_by('order', 'subrule_number')
+                    
+                    subrules_data = [
+                        {
+                            'id': subrule.id,
+                            'subrule_number': subrule.subrule_number,
+                            'name': subrule.name,
+                            'slug': subrule.slug,
+                            'content': subrule.content,
+                            'description': subrule.description,
+                            'effective_date': subrule.effective_date.isoformat() if subrule.effective_date else None,
+                            'amendments': subrule.amendments,
+                            'order': subrule.order,
+                            'is_active': subrule.is_active,
+                            'created_at': subrule.created_at.isoformat() if subrule.created_at else None,
+                            'updated_at': subrule.updated_at.isoformat() if subrule.updated_at else None
+                        }
+                        for subrule in subrules
+                    ]
+                    
+                    # Get all forms for this section
+                    forms = Form.objects.filter(
+                        section_id=section.id, 
+                        is_active=True
+                    ).order_by('order', 'form_number')
+                    
+                    forms_data = [
+                        {
+                            'id': form.id,
+                            'form_number': form.form_number,
+                            'name': form.name,
+                            'slug': form.slug,
+                            'description': form.description,
+                            'purpose': form.purpose,
+                            'pdf_file': form.pdf_file.url if form.pdf_file else None,
+                            'excel_file': form.excel_file.url if form.excel_file else None,
+                            'effective_date': form.effective_date.isoformat() if form.effective_date else None,
+                            'last_updated_date': form.last_updated_date.isoformat() if form.last_updated_date else None,
+                            'order': form.order,
+                            'is_active': form.is_active,
+                            'created_at': form.created_at.isoformat() if form.created_at else None,
+                            'updated_at': form.updated_at.isoformat() if form.updated_at else None
+                        }
+                        for form in forms
+                    ]
+                    
+                    sections_data.append({
+                        'id': section.id,
+                        'section_number': section.section_number,
+                        'name': section.name,
+                        'full_name': section.full_name,
+                        'slug': section.slug,
+                        'content': section.content,
+                        'short_description': section.short_description,
+                        'notes': section.notes,
+                        'amendments': section.amendments,
+                        'effective_date': section.effective_date.isoformat() if section.effective_date else None,
+                        'order': section.order,
+                        'is_active': section.is_active,
+                        'created_at': section.created_at.isoformat() if section.created_at else None,
+                        'updated_at': section.updated_at.isoformat() if section.updated_at else None,
+                        'subrules': subrules_data,
+                        'forms': forms_data
+                    })
+                
+                # Get all rule-level subrules (not associated with sections)
+                rule_subrules = SubRule.objects.filter(
+                    rule_id=rule.id, 
+                    section__isnull=True,
+                    is_active=True
+                ).order_by('order', 'subrule_number')
+                
+                rule_subrules_data = [
+                    {
+                        'id': subrule.id,
+                        'subrule_number': subrule.subrule_number,
+                        'name': subrule.name,
+                        'slug': subrule.slug,
+                        'content': subrule.content,
+                        'description': subrule.description,
+                        'effective_date': subrule.effective_date.isoformat() if subrule.effective_date else None,
+                        'amendments': subrule.amendments,
+                        'order': subrule.order,
+                        'is_active': subrule.is_active,
+                        'created_at': subrule.created_at.isoformat() if subrule.created_at else None,
+                        'updated_at': subrule.updated_at.isoformat() if subrule.updated_at else None
+                    }
+                    for subrule in rule_subrules
+                ]
+                
+                # Get all rule-level forms (not associated with sections)
+                rule_forms = Form.objects.filter(
+                    rule_id=rule.id,
+                    section__isnull=True,
+                    is_active=True
+                ).order_by('order', 'form_number')
+                
+                rule_forms_data = [
+                    {
+                        'id': form.id,
+                        'form_number': form.form_number,
+                        'name': form.name,
+                        'slug': form.slug,
+                        'description': form.description,
+                        'purpose': form.purpose,
+                        'pdf_file': form.pdf_file.url if form.pdf_file else None,
+                        'excel_file': form.excel_file.url if form.excel_file else None,
+                        'effective_date': form.effective_date.isoformat() if form.effective_date else None,
+                        'last_updated_date': form.last_updated_date.isoformat() if form.last_updated_date else None,
+                        'order': form.order,
+                        'is_active': form.is_active,
+                        'created_at': form.created_at.isoformat() if form.created_at else None,
+                        'updated_at': form.updated_at.isoformat() if form.updated_at else None
+                    }
+                    for form in rule_forms
+                ]
+                
+                # Get all notifications for this rule
+                notifications = Notification.objects.filter(
+                    rule_id=rule.id,
+                    is_active=True
+                ).order_by('-notification_date')
+                
+                notifications_data = [
+                    {
+                        'id': notification.id,
+                        'notification_number': notification.notification_number,
+                        'title': notification.title,
+                        'slug': notification.slug,
+                        'content': notification.content,
+                        'summary': notification.summary,
+                        'notification_date': notification.notification_date.isoformat() if notification.notification_date else None,
+                        'effective_date': notification.effective_date.isoformat() if notification.effective_date else None,
+                        'pdf_file': notification.pdf_file.url if notification.pdf_file else None,
+                        'notification_type': notification.notification_type,
+                        'is_active': notification.is_active,
+                        'created_at': notification.created_at.isoformat() if notification.created_at else None,
+                        'updated_at': notification.updated_at.isoformat() if notification.updated_at else None
+                    }
+                    for notification in notifications
+                ]
+                
+                rules_data.append({
+                    'id': rule.id,
+                    'name': rule.name,
+                    'full_name': rule.full_name,
+                    'rule_number': rule.rule_number,
+                    'year': rule.year,
+                    'slug': rule.slug,
+                    'short_description': rule.short_description,
+                    'long_description': rule.long_description,
+                    'amendments': rule.amendments,
+                    'last_amended_date': rule.last_amended_date.isoformat() if rule.last_amended_date else None,
+                    'enacted_date': rule.enacted_date.isoformat() if rule.enacted_date else None,
+                    'effective_date': rule.effective_date.isoformat() if rule.effective_date else None,
+                    'order': rule.order,
+                    'is_active': rule.is_active,
+                    'is_featured': rule.is_featured,
+                    'created_at': rule.created_at.isoformat() if rule.created_at else None,
+                    'updated_at': rule.updated_at.isoformat() if rule.updated_at else None,
+                    'sections': sections_data,
+                    'subrules': rule_subrules_data,
+                    'forms': rule_forms_data,
+                    'notifications': notifications_data
+                })
+            
+            chapters_data.append({
+                'id': chapter.id,
+                'chapter_number': chapter.chapter_number,
+                'name': chapter.name,
+                'full_name': chapter.full_name,
+                'slug': chapter.slug,
+                'description': chapter.description,
+                'content': chapter.content,
+                'order': chapter.order,
+                'is_active': chapter.is_active,
+                'level': chapter.level,
+                'created_at': chapter.created_at.isoformat() if chapter.created_at else None,
+                'updated_at': chapter.updated_at.isoformat() if chapter.updated_at else None,
+                'rules': rules_data
+            })
+        
+        # Final response data with complete subcategory info
+        response_data = {
+            'success': True,
+            'subcategory': {
+                'id': subcategory.id,
+                'name': subcategory.name,
+                'slug': subcategory.slug,
+                'description': subcategory.description,
+                'order': subcategory.order,
+                'is_active': subcategory.is_active,
+                'created_at': subcategory.created_at.isoformat() if subcategory.created_at else None,
+                'updated_at': subcategory.updated_at.isoformat() if subcategory.updated_at else None,
+                'category': {
+                    'id': subcategory.category.id,
+                    'name': subcategory.category.name,
+                    'slug': subcategory.category.slug,
+                    'description': subcategory.category.description,
+                    'icon': subcategory.category.icon
+                }
+            },
+            'chapters': chapters_data,
+            'total_chapters': len(chapters_data),
+            'statistics': {
+                'total_rules': sum(len(chapter['rules']) for chapter in chapters_data),
+                'total_sections': sum(len(rule['sections']) for chapter in chapters_data for rule in chapter['rules']),
+                'total_subrules': sum(len(rule['subrules']) for chapter in chapters_data for rule in chapter['rules']) + 
+                                sum(len(section['subrules']) for chapter in chapters_data for rule in chapter['rules'] for section in rule['sections']),
+                'total_forms': sum(len(rule['forms']) for chapter in chapters_data for rule in chapter['rules']) + 
+                              sum(len(section['forms']) for chapter in chapters_data for rule in chapter['rules'] for section in rule['sections']),
+                'total_notifications': sum(len(rule['notifications']) for chapter in chapters_data for rule in chapter['rules'])
+            }
+        }
+        
+        return JsonResponse(response_data, safe=False)
+        
+    except SubCategory.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Subcategory not found with this slug'
+        }, status=404)
+    except Exception as e:
+        # Print full traceback for debugging
+        print("=" * 50)
+        print("ERROR in get_subcategory_complete_data:")
+        print(f"Subcategory slug: {subcategory_slug}")
+        print(f"Error: {str(e)}")
+        print("Traceback:")
+        traceback.print_exc()
+        print("=" * 50)
+        
+        return JsonResponse({
+            'success': False,
+            'error': f'Server error: {str(e)}',
+            'debug_info': traceback.format_exc() if settings.DEBUG else None
+        }, status=500)

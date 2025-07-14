@@ -47,4 +47,23 @@ urlpatterns = [
     # API endpoints
     path('api/categories/', views.api_categories, name='api_categories'),
     path('api/category/<slug:category_slug>/', views.api_forms_by_category, name='api_forms_by_category'),
-]
+    
+    # api drf
+    # api drf
+    # api drf
+    # api drf
+    # api drf
+    # api drf
+
+
+    # path('form/<int:pk>/', views.form_detail, name='form_detail'),
+    # path('category/<slug:slug>/', views.category_forms, name='category_forms'),
+    # path('download/<int:pk>/', views.download_form, name='download_form'),
+    # path('download/<int:pk>/<str:file_type>/', views.download_specific_file, name='download_specific_file'),
+    
+    # API endpoints (secured with secret key)
+    path('api/get-categories/', views.api_categories_secure, name='api_categories_secure'),
+    path('api/category/<slug:category_slug>/forms/', views.api_category_forms_secure, name='api_category_forms_secure'),
+    path('api/form/<int:form_id>/', views.api_form_detail_secure, name='api_form_detail_secure'),
+    path('api/search/', views.api_search_forms_secure, name='api_search_forms_secure'),
+    ]

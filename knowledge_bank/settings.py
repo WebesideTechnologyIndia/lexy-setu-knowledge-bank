@@ -64,6 +64,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'x-secret-key',
+    'secret-key',
 ]
 
 # Application definition
@@ -83,6 +84,7 @@ INSTALLED_APPS = [
     'acts',
     'rules',
     'forms',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

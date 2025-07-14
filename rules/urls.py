@@ -129,4 +129,15 @@ urlpatterns = [
          views.rule_detail_simple_with_category, name='rule_detail_simple_with_category'),
          path('recent/', views.recent_rules_view, name='recent'),
 path('favorites/', views.favorites_view, name='favorites'),
+
+
+     # drf api 
+     # drf api 
+     # drf api 
+     # drf api 
+     # drf api 
+     # drf api 
+     # drf api 
+    path('api/subcategory/<str:subcategory_slug>/', views.get_subcategory_complete_data, name='subcategory_data'),
+
 ]

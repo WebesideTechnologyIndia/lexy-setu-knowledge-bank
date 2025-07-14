@@ -13,7 +13,7 @@
                 </h4>
             </div>
             <div class="card-body">
-                <form method="post" novalidate>
+                <form method="post" enctype="multipart/form-data" novalidate>
                     {% csrf_token %}
                     
                     <div class="mb-3">
@@ -102,6 +102,48 @@
                         </small>
                     </div>
                     
+                    <!-- PDF Upload Field -->
+                    <div class="mb-3">
+                        <label for="{{ form.pdf_file.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-pdf text-danger"></i> PDF Attachment
+                        </label>
+                        <div class="input-group">
+                            {{ form.pdf_file }}
+                            <div class="input-group-append">
+                                <span class="input-group-text">
+                                    <i class="fas fa-upload"></i>
+                                </span>
+                            </div>
+                        </div>
+                        {% if form.pdf_file.errors %}
+                            <div class="text-danger">
+                                {% for error in form.pdf_file.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Upload PDF file (optional, max 10MB). Only PDF files are allowed.
+                        </small>
+                        
+                        <!-- Show current PDF if editing -->
+                        {% if form.instance.pdf_file %}
+                            <div class="mt-2">
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                                    <div>
+                                        <strong>Current PDF:</strong> 
+                                        <a href="{{ form.instance.pdf_file.url }}" target="_blank" class="text-decoration-none">
+                                            {{ form.instance.pdf_filename }}
+                                        </a>
+                                        <small class="text-muted">({{ form.instance.pdf_size }} MB)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Save Notification
@@ -115,4 +157,35 @@
         </div>
     </div>
 </div>
+
+<script>
+// PDF file preview and validation
+document.addEventListener('DOMContentLoaded', function() {
+    const pdfInput = document.getElementById('{{ form.pdf_file.id_for_label }}');
+    
+    if (pdfInput) {
+        pdfInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File size cannot exceed 10MB');
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Check file type
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Only PDF files are allowed');
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Show file info
+                console.log('Selected PDF:', file.name, 'Size:', (file.size / (1024 * 1024)).toFixed(2) + ' MB');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

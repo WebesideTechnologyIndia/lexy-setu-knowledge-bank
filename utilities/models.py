@@ -6,25 +6,34 @@ from django.db import models
 from ckeditor.fields import RichTextField
 from django.urls import reverse
 
+from django.utils.text import slugify
+
 class Category(models.Model):
     name = models.CharField(max_length=200, unique=True)
     display_name = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, blank=True)  # 👈 Add this
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name_plural = "Categories"
         ordering = ['display_name']
-    
+
     def __str__(self):
         return self.display_name
-    
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)  # ✅ create slug from name or display_name
+        super().save(*args, **kwargs)
+
     @property
     def is_parent(self):
         return self.parent is None
+
 
 class Utility(models.Model):
     PRIORITY_CHOICES = [

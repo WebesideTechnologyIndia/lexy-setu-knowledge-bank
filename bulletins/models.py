@@ -2,6 +2,12 @@
 from django.db import models
 from ckeditor.fields import RichTextField
 from django.utils import timezone
+import os
+
+def notification_pdf_upload_path(instance, filename):
+    """Generate upload path for notification PDFs"""
+    # Create path like: notifications/2024/01/filename.pdf
+    return f'notifications/{instance.notification_date.year}/{instance.notification_date.month:02d}/{filename}'
 
 class NotificationCategory(models.Model):
     CATEGORY_CHOICES = [
@@ -60,6 +66,15 @@ class Notification(models.Model):
     notification_date = models.DateField(default=timezone.now, help_text="Date of the notification")
     content = RichTextField()
     category = models.ForeignKey(NotificationCategory, on_delete=models.CASCADE, related_name='notifications')
+    
+    # PDF Upload Field
+    pdf_file = models.FileField(
+        upload_to=notification_pdf_upload_path,
+        null=True,
+        blank=True,
+        help_text="Upload PDF file (optional)"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -67,6 +82,35 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.notification_number} - {self.title}"
 
+    @property
+    def has_pdf(self):
+        """Check if notification has PDF file"""
+        return bool(self.pdf_file)
+
+    @property
+    def pdf_filename(self):
+        """Get PDF filename without path"""
+        if self.pdf_file:
+            return os.path.basename(self.pdf_file.name)
+        return None
+
+    @property
+    def pdf_size(self):
+        """Get PDF file size in MB"""
+        if self.pdf_file:
+            try:
+                return round(self.pdf_file.size / (1024 * 1024), 2)
+            except:
+                return 0
+        return 0
+
+    def delete(self, *args, **kwargs):
+        """Delete PDF file when notification is deleted"""
+        if self.pdf_file:
+            if os.path.isfile(self.pdf_file.path):
+                os.remove(self.pdf_file.path)
+        super().delete(*args, **kwargs)
+
     class Meta:
         ordering = ['-notification_date', '-created_at']
-        unique_together = ['notification_number']  # Ensure notification number is unique
+        unique_together = ['notification_number']

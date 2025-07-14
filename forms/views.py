@@ -928,3 +928,470 @@ def toggle_form_status_view(request):
             'success': False,
             'error': str(e)
         })
+    
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from .models import Category, TaxForm
+
+# Secret key
+API_SECRET_KEY = "Rahul@121005"
+
+def validate_api_key(request):
+    print("🔐 Checking Secret Key...")
+    print("ALL HEADERS:", request.META)
+
+    secret_key = request.META.get('HTTP_SECRET_KEY')
+    print("🔑 Found:", secret_key)
+
+    return secret_key == API_SECRET_KEY
+
+
+def get_file_absolute_url(request, file_field):
+    """Helper function to get absolute URL for file fields"""
+    if file_field and hasattr(file_field, 'url'):
+        return request.build_absolute_uri(file_field.url)
+    return None
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_category_forms_secure(request, category_slug):
+    """
+    Secure API to get all forms by category with file URLs
+    URL: /api/category/<slug>/forms/
+    Headers: Secret-Key: Rahul@121005
+    """
+
+    if not validate_api_key(request):
+        return JsonResponse({
+            'success': False,
+            'error': 'Unauthorized Access',
+            'message': 'Valid Secret-Key header is required for API access',
+            'code': 'INVALID_SECRET_KEY'
+        }, status=401)
+
+    try:
+        category = get_object_or_404(Category, slug=category_slug, is_active=True)
+        forms = TaxForm.objects.filter(category=category, is_active=True).order_by('-created_at')
+
+        forms_data = []
+        for form in forms:
+            # Get file URLs using the helper function
+            pdf_url = get_file_absolute_url(request, form.pdf_file)
+            word_url = get_file_absolute_url(request, form.word_file)
+            excel_url = get_file_absolute_url(request, form.excel_file)
+            
+            # Get file sizes in human readable format
+            pdf_size = form.get_file_size_display('pdf') if form.pdf_file else None
+            word_size = form.get_file_size_display('word') if form.word_file else None
+            excel_size = form.get_file_size_display('excel') if form.excel_file else None
+            
+            form_data = {
+                'id': form.id,
+                'form_number': form.form_number,
+                'title': form.title,
+                'description': form.description,
+                'assessment_year': form.assessment_year,
+                'financial_year': form.financial_year,
+                'download_count': form.download_count,
+                'is_featured': form.is_featured,
+                'created_at': form.created_at.isoformat(),
+                'updated_at': form.updated_at.isoformat(),
+                
+                # File availability flags
+                'has_pdf': bool(form.pdf_file),
+                'has_word': bool(form.word_file),
+                'has_excel': bool(form.excel_file),
+                'has_external_url': bool(form.external_url),
+                
+                # Direct file URLs
+                'pdf_url': pdf_url,
+                'word_url': word_url,
+                'excel_url': excel_url,
+                'external_url': form.external_url,
+                
+                # File sizes
+                'pdf_size': pdf_size,
+                'word_size': word_size,
+                'excel_size': excel_size,
+                'total_size': form.get_file_size_display('total'),
+                
+                # Available formats
+                'available_formats': form.get_available_formats(),
+                'file_type': form.file_type,
+                'has_multiple_formats': form.has_multiple_formats(),
+                'primary_file_url': get_file_absolute_url(request, getattr(form, f'{form.file_type}_file', None)) if form.file_type != 'external' else form.external_url,
+                
+                # Download statistics
+                'download_stats': form.get_download_stats(),
+                'most_popular_format': form.get_most_popular_format(),
+                
+                # Django URLs (for web interface)
+                'detail_url': request.build_absolute_uri(
+                    reverse('forms:form_detail', kwargs={'pk': form.pk})
+                ),
+                'download_url': request.build_absolute_uri(
+                    reverse('forms:download_form', kwargs={'pk': form.pk})
+                ),
+                'pdf_download_url': request.build_absolute_uri(
+                    reverse('forms:download_specific_file', kwargs={'pk': form.pk, 'file_type': 'pdf'})
+                ) if form.pdf_file else None,
+                'word_download_url': request.build_absolute_uri(
+                    reverse('forms:download_specific_file', kwargs={'pk': form.pk, 'file_type': 'word'})
+                ) if form.word_file else None,
+                'excel_download_url': request.build_absolute_uri(
+                    reverse('forms:download_specific_file', kwargs={'pk': form.pk, 'file_type': 'excel'})
+                ) if form.excel_file else None,
+                
+                # SEO
+                'meta_title': form.meta_title,
+                'meta_description': form.meta_description,
+                
+                # Category info
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'slug': category.slug
+                }
+            }
+            
+            forms_data.append(form_data)
+
+        return JsonResponse({
+            'success': True,
+            'category': {
+                'id': category.id,
+                'name': category.name,
+                'slug': category.slug,
+                'description': category.description,
+                'total_forms': len(forms_data)
+            },
+            'forms': forms_data,
+            'total_count': len(forms_data),
+            'meta': {
+                'total_pdf_forms': sum(1 for f in forms_data if f['has_pdf']),
+                'total_word_forms': sum(1 for f in forms_data if f['has_word']),
+                'total_excel_forms': sum(1 for f in forms_data if f['has_excel']),
+                'total_external_forms': sum(1 for f in forms_data if f['has_external_url']),
+            }
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Server Error',
+            'message': str(e),
+            'code': 'SERVER_ERROR'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_categories_secure(request):
+    """
+    Secure API to get all active categories
+    URL: /api/categories/
+    Headers: Secret-Key: Rahul@121005
+    """
+
+    if not validate_api_key(request):
+        return JsonResponse({
+            'success': False,
+            'error': 'Unauthorized Access',
+            'message': 'Valid Secret-Key header is required for API access',
+            'code': 'INVALID_SECRET_KEY'
+        }, status=401)
+
+    try:
+        categories = Category.objects.filter(is_active=True).order_by('order', 'name')
+        data = []
+        for cat in categories:
+            # Get forms statistics for this category
+            forms_qs = cat.forms.filter(is_active=True)
+            
+            category_data = {
+                'id': cat.id,
+                'name': cat.name,
+                'slug': cat.slug,
+                'description': cat.description,
+                'order': cat.order,
+                'forms_count': forms_qs.count(),
+                'api_url': request.build_absolute_uri(
+                    reverse('forms:api_category_forms_secure', kwargs={'category_slug': cat.slug})
+                ),
+                'stats': {
+                    'total_forms': forms_qs.count(),
+                    'pdf_forms': forms_qs.exclude(pdf_file__isnull=True).exclude(pdf_file__exact='').count(),
+                    'word_forms': forms_qs.exclude(word_file__isnull=True).exclude(word_file__exact='').count(),
+                    'excel_forms': forms_qs.exclude(excel_file__isnull=True).exclude(excel_file__exact='').count(),
+                    'external_forms': forms_qs.exclude(external_url__isnull=True).exclude(external_url__exact='').count(),
+                    'featured_forms': forms_qs.filter(is_featured=True).count(),
+                    'total_downloads': sum(form.download_count for form in forms_qs),
+                }
+            }
+            
+            data.append(category_data)
+
+        return JsonResponse({
+            'success': True,
+            'categories': data,
+            'total_count': len(data),
+            'meta': {
+                'total_categories': len(data),
+                'total_forms': sum(cat['forms_count'] for cat in data),
+                'total_downloads': sum(cat['stats']['total_downloads'] for cat in data),
+            }
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Server Error',
+            'message': str(e),
+            'code': 'SERVER_ERROR'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_form_detail_secure(request, form_id):
+    """
+    Secure API to get detailed information about a specific form
+    URL: /api/form/<id>/
+    Headers: Secret-Key: Rahul@121005
+    """
+
+    if not validate_api_key(request):
+        return JsonResponse({
+            'success': False,
+            'error': 'Unauthorized Access',
+            'message': 'Valid Secret-Key header is required for API access',
+            'code': 'INVALID_SECRET_KEY'
+        }, status=401)
+
+    try:
+        form = get_object_or_404(TaxForm, id=form_id, is_active=True)
+        
+        # Get file URLs
+        pdf_url = get_file_absolute_url(request, form.pdf_file)
+        word_url = get_file_absolute_url(request, form.word_file)
+        excel_url = get_file_absolute_url(request, form.excel_file)
+        
+        # Get related links
+        related_links = []
+        for link in form.related_links.filter(is_active=True):
+            related_links.append({
+                'title': link.title,
+                'url': link.url,
+                'type': link.link_type,
+                'description': link.description
+            })
+        
+        # Get additional files
+        additional_files = []
+        for file_obj in form.additional_files.filter(is_active=True):
+            additional_files.append({
+                'file_name': file_obj.file_name,
+                'file_url': get_file_absolute_url(request, file_obj.file),
+                'file_type': file_obj.file_type,
+                'file_size': file_obj.get_file_size_display(),
+                'description': file_obj.description,
+                'download_count': file_obj.download_count
+            })
+        
+        form_data = {
+            'id': form.id,
+            'form_number': form.form_number,
+            'title': form.title,
+            'description': form.description,
+            'assessment_year': form.assessment_year,
+            'financial_year': form.financial_year,
+            'download_count': form.download_count,
+            'is_featured': form.is_featured,
+            'created_at': form.created_at.isoformat(),
+            'updated_at': form.updated_at.isoformat(),
+            
+            # File information
+            'has_pdf': bool(form.pdf_file),
+            'has_word': bool(form.word_file),
+            'has_excel': bool(form.excel_file),
+            'has_external_url': bool(form.external_url),
+            
+            # Direct file URLs
+            'pdf_url': pdf_url,
+            'word_url': word_url,
+            'excel_url': excel_url,
+            'external_url': form.external_url,
+            
+            # File sizes
+            'pdf_size': form.get_file_size_display('pdf') if form.pdf_file else None,
+            'word_size': form.get_file_size_display('word') if form.word_file else None,
+            'excel_size': form.get_file_size_display('excel') if form.excel_file else None,
+            'total_size': form.get_file_size_display('total'),
+            
+            # File metadata
+            'available_formats': form.get_available_formats(),
+            'file_type': form.file_type,
+            'has_multiple_formats': form.has_multiple_formats(),
+            'primary_file_url': get_file_absolute_url(request, getattr(form, f'{form.file_type}_file', None)) if form.file_type != 'external' else form.external_url,
+            
+            # Download statistics
+            'download_stats': form.get_download_stats(),
+            'most_popular_format': form.get_most_popular_format(),
+            
+            # Category information
+            'category': {
+                'id': form.category.id,
+                'name': form.category.name,
+                'slug': form.category.slug,
+                'description': form.category.description
+            },
+            
+            # Related content
+            'related_links': related_links,
+            'additional_files': additional_files,
+            
+            # SEO
+            'meta_title': form.meta_title,
+            'meta_description': form.meta_description,
+            
+            # URLs for web interface
+            'detail_url': request.build_absolute_uri(form.get_absolute_url()),
+            'download_url': request.build_absolute_uri(
+                reverse('forms:download_form', kwargs={'pk': form.pk})
+            ),
+        }
+
+        return JsonResponse({
+            'success': True,
+            'form': form_data
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Server Error',
+            'message': str(e),
+            'code': 'SERVER_ERROR'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_search_forms_secure(request):
+    """
+    Secure API to search forms
+    URL: /api/search/?q=<query>&category=<slug>&format=<format>
+    Headers: Secret-Key: Rahul@121005
+    """
+
+    if not validate_api_key(request):
+        return JsonResponse({
+            'success': False,
+            'error': 'Unauthorized Access',
+            'message': 'Valid Secret-Key header is required for API access',
+            'code': 'INVALID_SECRET_KEY'
+        }, status=401)
+
+    try:
+        query = request.GET.get('q', '').strip()
+        category_slug = request.GET.get('category', '').strip()
+        file_format = request.GET.get('format', '').strip()
+        
+        # Start with all active forms
+        forms = TaxForm.objects.filter(is_active=True)
+        
+        # Apply search filters
+        if query:
+            forms = forms.filter(
+                models.Q(title__icontains=query) |
+                models.Q(form_number__icontains=query) |
+                models.Q(description__icontains=query)
+            )
+        
+        if category_slug:
+            forms = forms.filter(category__slug=category_slug)
+        
+        if file_format:
+            if file_format == 'pdf':
+                forms = forms.exclude(pdf_file__isnull=True).exclude(pdf_file__exact='')
+            elif file_format == 'word':
+                forms = forms.exclude(word_file__isnull=True).exclude(word_file__exact='')
+            elif file_format == 'excel':
+                forms = forms.exclude(excel_file__isnull=True).exclude(excel_file__exact='')
+            elif file_format == 'external':
+                forms = forms.exclude(external_url__isnull=True).exclude(external_url__exact='')
+        
+        forms = forms.order_by('-is_featured', '-download_count', '-created_at')
+        
+        # Build response data
+        forms_data = []
+        for form in forms:
+            pdf_url = get_file_absolute_url(request, form.pdf_file)
+            word_url = get_file_absolute_url(request, form.word_file)
+            excel_url = get_file_absolute_url(request, form.excel_file)
+            
+            forms_data.append({
+                'id': form.id,
+                'form_number': form.form_number,
+                'title': form.title,
+                'description': form.description,
+                'assessment_year': form.assessment_year,
+                'financial_year': form.financial_year,
+                'download_count': form.download_count,
+                'is_featured': form.is_featured,
+                'created_at': form.created_at.isoformat(),
+                'updated_at': form.updated_at.isoformat(),
+                
+                # File availability
+                'has_pdf': bool(form.pdf_file),
+                'has_word': bool(form.word_file),
+                'has_excel': bool(form.excel_file),
+                'has_external_url': bool(form.external_url),
+                
+                # Direct file URLs
+                'pdf_url': pdf_url,
+                'word_url': word_url,
+                'excel_url': excel_url,
+                'external_url': form.external_url,
+                
+                # File metadata
+                'available_formats': form.get_available_formats(),
+                'file_type': form.file_type,
+                'primary_file_url': get_file_absolute_url(request, getattr(form, f'{form.file_type}_file', None)) if form.file_type != 'external' else form.external_url,
+                
+                # Category
+                'category': {
+                    'id': form.category.id,
+                    'name': form.category.name,
+                    'slug': form.category.slug
+                },
+                
+                # URLs
+                'detail_url': request.build_absolute_uri(form.get_absolute_url()),
+            })
+
+        return JsonResponse({
+            'success': True,
+            'forms': forms_data,
+            'total_count': len(forms_data),
+            'search_params': {
+                'query': query,
+                'category': category_slug,
+                'format': file_format
+            }
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': 'Server Error',
+            'message': str(e),
+            'code': 'SERVER_ERROR'
+        }, status=500)

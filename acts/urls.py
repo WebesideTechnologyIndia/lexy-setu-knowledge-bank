@@ -126,4 +126,8 @@ urlpatterns = [
     # Direct category/act access (shortcut)
     path('category/<slug:category_slug>/act/<slug:slug>/', 
          views.act_detail_simple_with_category, name='act_detail_simple_with_category'),
+     #     rest full api's
+     #     rest full api's
+    path('api/subcategory/<slug:subcategory_slug>/', views.api_subcategory_full_detail, name='api-subcategory-full-detail'),
+
 ]

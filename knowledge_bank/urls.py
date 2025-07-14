@@ -22,8 +22,6 @@ urlpatterns = [
     path('links/', include('links.urls')),
     path('rules/', include('rules.urls')),
     path('forms/', include('forms.urls')),
-    
-    # Root redirect
     path('', redirect_to_acts, name='home_redirect'),
 ]
 

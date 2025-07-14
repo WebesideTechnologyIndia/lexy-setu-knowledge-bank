@@ -13,9 +13,18 @@ class NotificationForm(forms.ModelForm):
         help_text="Select the notification date"
     )
     
+    pdf_file = forms.FileField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf'
+        }),
+        help_text="Upload PDF file (optional, max 10MB)"
+    )
+    
     class Meta:
         model = Notification
-        fields = ['title', 'notification_number', 'notification_date', 'content', 'category']
+        fields = ['title', 'notification_number', 'notification_date', 'content', 'category', 'pdf_file']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -54,6 +63,7 @@ class NotificationForm(forms.ModelForm):
         self.fields['notification_date'].required = True
         self.fields['content'].required = True
         self.fields['category'].required = True
+        self.fields['pdf_file'].required = False
 
     def clean_notification_number(self):
         notification_number = self.cleaned_data.get('notification_number')
@@ -65,3 +75,16 @@ class NotificationForm(forms.ModelForm):
             if existing.exists():
                 raise forms.ValidationError("This notification number already exists.")
         return notification_number
+
+    def clean_pdf_file(self):
+        pdf_file = self.cleaned_data.get('pdf_file')
+        if pdf_file:
+            # Check file size (max 10MB)
+            if pdf_file.size > 10 * 1024 * 1024:  # 10MB in bytes
+                raise forms.ValidationError("PDF file size cannot exceed 10MB.")
+            
+            # Check file extension
+            if not pdf_file.name.lower().endswith('.pdf'):
+                raise forms.ValidationError("Only PDF files are allowed.")
+        
+        return pdf_file

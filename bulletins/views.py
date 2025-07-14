@@ -54,10 +54,16 @@ def notification_detail(request, pk):
 def add_notification(request):
     """Add new notification - WEB VERSION"""
     if request.method == 'POST':
-        form = NotificationForm(request.POST)
+        form = NotificationForm(request.POST, request.FILES)  # request.FILES add kiya
         if form.is_valid():
             notification = form.save()
-            messages.success(request, f'Notification "{notification.title}" successfully added!')
+            
+            # Success message with PDF info
+            success_msg = f'Notification "{notification.title}" successfully added!'
+            if notification.pdf_file:
+                success_msg += f' PDF file "{notification.pdf_filename}" uploaded successfully.'
+            
+            messages.success(request, success_msg)
             return redirect('notification_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -65,7 +71,7 @@ def add_notification(request):
         form = NotificationForm()
     
     categories = NotificationCategory.objects.prefetch_related('subcategories')
-    return render(request, 'notifications/add_notification.html', {  # Yeh line check karo
+    return render(request, 'notifications/add_notification.html', {
         'form': form,
         'categories': categories
     })

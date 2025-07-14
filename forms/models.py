@@ -1,6 +1,7 @@
 # models.py
 from django.db import models
 from django.urls import reverse
+from django.db.models import Q  # Add this import for search functionality
 from ckeditor.fields import RichTextField
 import os
 
@@ -230,29 +231,6 @@ class TaxForm(models.Model):
         super().save(*args, **kwargs)
 
 
-class FormDownload(models.Model):
-    """Track form downloads for analytics"""
-    DOWNLOAD_TYPE_CHOICES = [
-        ('pdf', 'PDF Download'),
-        ('word', 'Word Download'),
-        ('excel', 'Excel Download'),
-        ('external', 'External Link'),
-    ]
-    
-    form = models.ForeignKey(TaxForm, on_delete=models.CASCADE, related_name='downloads')
-    download_type = models.CharField(max_length=20, choices=DOWNLOAD_TYPE_CHOICES, default='pdf')
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField(blank=True, null=True)
-    downloaded_at = models.DateTimeField(auto_now_add=True)
-    referrer = models.URLField(blank=True, null=True)
-
-    class Meta:
-        ordering = ['-downloaded_at']
-
-    def __str__(self):
-        return f"{self.form.form_number} ({self.download_type}) - {self.downloaded_at}"
-
-
 class FormLink(models.Model):
     """Additional useful links related to forms"""
     LINK_TYPE_CHOICES = [
@@ -266,7 +244,7 @@ class FormLink(models.Model):
         ('excel_alt', 'Alternative Excel Link'),
         ('other', 'Other'),
     ]
-
+    
     form = models.ForeignKey(TaxForm, on_delete=models.CASCADE, related_name='related_links')
     title = models.CharField(max_length=200)
     url = models.URLField()
@@ -331,3 +309,26 @@ class FormFile(models.Model):
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
+
+
+class FormDownload(models.Model):
+    """Track form downloads for analytics"""
+    DOWNLOAD_TYPE_CHOICES = [
+        ('pdf', 'PDF Download'),
+        ('word', 'Word Download'),
+        ('excel', 'Excel Download'),
+        ('external', 'External Link'),
+    ]
+    
+    form = models.ForeignKey(TaxForm, on_delete=models.CASCADE, related_name='downloads')
+    download_type = models.CharField(max_length=20, choices=DOWNLOAD_TYPE_CHOICES, default='pdf')
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True, null=True)
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+    referrer = models.URLField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-downloaded_at']
+
+    def __str__(self):
+        return f"{self.form.form_number} ({self.download_type}) - {self.downloaded_at}"
