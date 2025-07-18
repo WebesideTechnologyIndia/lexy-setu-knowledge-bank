@@ -49,7 +49,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5501",
     "https://resources.webesidetechnology.com",
     "http://resources.webesidetechnology.com",
-    "https://lexsetu.webeside.in",  # ✅ Add this
+    "https://lexsetu.webeside.in",
+    "https://lexsetu.in"  # ✅ Add this
 ]
 
 

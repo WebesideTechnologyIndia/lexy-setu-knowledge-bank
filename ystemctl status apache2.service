@@ -1,0 +1,14 @@
+[0;1;31m×[0m apache2.service - The Apache HTTP Server
+     Loaded: loaded (/lib/systemd/system/apache2.service; enabled; vendor preset: enabled)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Sat 2025-07-05 13:38:04 UTC; 1min 14s ago
+       Docs: https://httpd.apache.org/docs/2.4/
+    Process: 457026 ExecStart=/usr/sbin/apachectl start [0;1;31m(code=exited, status=1/FAILURE)[0m
+        CPU: 18ms
+
+Jul 05 13:38:04 srv827145 systemd[1]: Starting The Apache HTTP Server...
+Jul 05 13:38:04 srv827145 apachectl[457029]: apache2: Syntax error on line 1 of /etc/apache2/apache2.conf: Cannot load /var/www/resources/lexy-setu-knowledge-bank/venv/lib/python3.10/site-packages/mod_wsgi/server/mod_wsgi-py310.cpython-310-x86_64-linux-gnu.so into server: /var/www/resources/lexy-setu-knowledge-bank/venv/lib/python3.10/site-packages/mod_wsgi/server/mod_wsgi-py310.cpython-310-x86_64-linux-gnu.so: cannot open shared object file: No such file or directory
+Jul 05 13:38:04 srv827145 apachectl[457026]: Action 'start' failed.
+Jul 05 13:38:04 srv827145 apachectl[457026]: The Apache error log may have more information.
+Jul 05 13:38:04 srv827145 systemd[1]: [0;1;39m[0;1;31m[0;1;39mapache2.service: Control process exited, code=exited, status=1/FAILURE[0m
+Jul 05 13:38:04 srv827145 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mapache2.service: Failed with result 'exit-code'.[0m
+Jul 05 13:38:04 srv827145 systemd[1]: [0;1;31m[0;1;39m[0;1;31mFailed to start The Apache HTTP Server.[0m
